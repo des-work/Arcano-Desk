@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, BookOpen, Lightbulb, Search, X, Wand2, Brain } from 'lucide-react';
-import { useOllama } from '../contexts/OllamaContext';
-import { useFiles } from '../contexts/FileContext';
+import { useOllama } from '../hooks/useOllama';
+import { useFiles } from '../hooks/useFiles';
 
 interface TopicGeneratorProps {
   isOpen: boolean;

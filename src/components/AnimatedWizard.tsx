@@ -1,6 +1,5 @@
 import React from 'react';
 import { WizardAnimations } from '../animations';
-import { useUI } from '../hooks/useUI';
 import { useWizard } from '../hooks/useWizard';
 
 interface AnimatedWizardProps {
@@ -12,7 +11,6 @@ export const AnimatedWizard: React.FC<AnimatedWizardProps> = ({
   className = '',
   onSpellComplete
 }) => {
-  const { wizard } = useUI();
   const { 
     mood, 
     isLearning, 

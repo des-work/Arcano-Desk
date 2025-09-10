@@ -5,7 +5,7 @@ import { useAnimations } from '../animations';
 import { InteractiveButton, InteractiveCard } from '../animations';
 import { useFiles } from '../hooks/useFiles';
 import { useWizard } from '../hooks/useWizard';
-import { FileUpload, Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface UploadPhaseProps {
@@ -181,7 +181,7 @@ export const UploadPhase: React.FC<UploadPhaseProps> = ({ onComplete }) => {
                 {/* Current File */}
                 {currentFile && (
                   <div className="flex items-center space-x-3">
-                    <FileUpload className="w-5 h-5 text-purple-400" />
+                    <Upload className="w-5 h-5 text-purple-400" />
                     <span className="text-purple-200 font-arcane truncate">
                       {currentFile.name}
                     </span>

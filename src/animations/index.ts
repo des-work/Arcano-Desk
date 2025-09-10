@@ -16,6 +16,20 @@ export {
 } from './InteractiveAnimations';
 export { EpicAnimation as EpicAnimationComponent } from './EpicAnimations';
 
+// Advanced Animation System Exports
+export { 
+  AdvancedAnimationProvider, 
+  useAdvancedAnimations 
+} from './AdvancedAnimationEngine';
+export { 
+  UltraParticleSystem, 
+  PARTICLE_SYSTEMS 
+} from './UltraParticleSystem';
+export { 
+  IntelligentOrchestrator, 
+  useAnimationContext 
+} from './IntelligentOrchestrator';
+
 // Types and Constants
 export type {
   AnimationType,

@@ -342,7 +342,7 @@ export const AnimatedComponent: React.FC<{
 
 // Epic Animation Component for Dragon Battle
 export const EpicAnimation: React.FC<{
-  type: 'dragon-battle' | 'epic-summary' | 'massive-spell';
+  type: 'dragon-battle' | 'epic-summary' | 'massive-spell' | 'reality-bend';
   isActive: boolean;
   onComplete?: () => void;
 }> = ({ type, isActive, onComplete }) => {
@@ -451,6 +451,141 @@ export const EpicAnimation: React.FC<{
               </div>
             </motion.div>
           )}
+        </div>
+      )}
+
+      {/* Epic Summary Animation */}
+      {type === 'epic-summary' && (
+        <div className="relative w-full h-full">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-cyan-900/20 animate-pulse" />
+          
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            animate={{
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <div className="text-8xl">📚</div>
+          </motion.div>
+          
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-3 h-3 bg-purple-400 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`
+              }}
+              animate={{
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+                y: [0, -50, -100]
+              }}
+              transition={{
+                duration: 2,
+                delay: Math.random() * 2,
+                repeat: Infinity,
+                ease: "easeOut"
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Massive Spell Animation */}
+      {type === 'massive-spell' && (
+        <div className="relative w-full h-full">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20 animate-pulse" />
+          
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 360]
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <div className="text-9xl">⚡</div>
+          </motion.div>
+          
+          {[...Array(25)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-blue-400 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`
+              }}
+              animate={{
+                opacity: [0, 1, 0],
+                scale: [0, 2, 0],
+                x: [0, Math.random() * 200 - 100],
+                y: [0, Math.random() * 200 - 100]
+              }}
+              transition={{
+                duration: 3,
+                delay: Math.random() * 3,
+                repeat: Infinity,
+                ease: "easeOut"
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Reality Bend Animation */}
+      {type === 'reality-bend' && (
+        <div className="relative w-full h-full">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/20 via-purple-900/20 to-pink-900/20 animate-pulse" />
+          
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            animate={{
+              scale: [1, 1.3, 1],
+              rotate: [0, 180, 360],
+              skewX: [0, 10, -10, 0]
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <div className="text-7xl">🌀</div>
+          </motion.div>
+          
+          {[...Array(30)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-cyan-400 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`
+              }}
+              animate={{
+                opacity: [0, 1, 0],
+                scale: [0, 3, 0],
+                x: [0, Math.cos(i * 12) * 100],
+                y: [0, Math.sin(i * 12) * 100]
+              }}
+              transition={{
+                duration: 4,
+                delay: Math.random() * 4,
+                repeat: Infinity,
+                ease: "easeOut"
+              }}
+            />
+          ))}
         </div>
       )}
     </div>

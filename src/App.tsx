@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import ReduxProvider from './components/ReduxProvider.tsx';
-import LaunchScreen from './components/LaunchScreen.tsx';
-import DynamicLayout from './components/DynamicLayout.tsx';
-import UploadPhase from './components/UploadPhase.tsx';
-import LibraryPhase from './components/LibraryPhase.tsx';
-import SummaryPhase from './components/SummaryPhase.tsx';
-import MagicalEffects from './components/MagicalEffects.tsx';
-import { useUI } from './hooks/useUI.ts';
-import { usePerformance } from './hooks/usePerformance.ts';
-import { AnimationProvider, EpicAnimation } from './animations';
+import ReduxProvider from './components/ReduxProvider';
+import LaunchScreen from './components/LaunchScreen';
+import DynamicLayout from './components/DynamicLayout';
+import UploadPhase from './components/UploadPhase';
+import LibraryPhase from './components/LibraryPhase';
+import SummaryPhase from './components/SummaryPhase';
+import MagicalEffects from './components/MagicalEffects';
+import { useUI } from './hooks/useUI';
+import { usePerformance } from './hooks/usePerformance';
+import { 
+  AdvancedAnimationProvider, 
+  EpicAnimation, 
+  IntelligentOrchestrator, 
+  useAnimationContext 
+} from './animations';
 
 function AppContent() {
   const { effects, triggerEffect, clearActiveEffect } = useUI();
   const { startRenderTimer, endRenderTimer } = usePerformance();
+  const { buildContext } = useAnimationContext();
   const [epicAnimation, setEpicAnimation] = useState<{
     type: 'dragon-battle' | 'epic-summary' | 'massive-spell' | 'reality-bend';
     isActive: boolean;
@@ -90,8 +96,11 @@ function AppContent() {
     setCurrentPhase('idle');
   };
 
+  // Build animation context
+  const animationContext = buildContext('app-load', { currentPhase }, { mood: 'happy', energy: 100 });
+
   return (
-    <AnimationProvider>
+    <AdvancedAnimationProvider>
       <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 relative overflow-hidden">
         {/* Mystical Background Layers */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
@@ -153,6 +162,20 @@ function AppContent() {
           </DynamicLayout>
         )}
 
+        {/* Intelligent Animation Orchestrator */}
+        <IntelligentOrchestrator
+          context={animationContext}
+          onAnimationTriggered={(type, config) => {
+            triggerEffect(type, config.intensity || 'moderate', config.duration || 3000);
+          }}
+          onSequenceStarted={(id) => {
+            console.log(`Animation sequence started: ${id}`);
+          }}
+          onSequenceCompleted={(id) => {
+            console.log(`Animation sequence completed: ${id}`);
+          }}
+        />
+
         {/* Epic Animations */}
         <EpicAnimation
           type={epicAnimation.type}
@@ -175,7 +198,7 @@ function AppContent() {
           }}
         />
       </div>
-    </AnimationProvider>
+    </AdvancedAnimationProvider>
   );
 }
 

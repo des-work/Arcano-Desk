@@ -4,7 +4,6 @@ import { useSpring, animated } from '@react-spring/web';
 import { useAnimations } from '../animations';
 import { AnimatedWizard } from './AnimatedWizard';
 import { InteractiveButton } from '../animations';
-import { useUI } from '../hooks/useUI';
 import { useWizard } from '../hooks/useWizard';
 
 type LayoutPhase = 'upload' | 'library' | 'summary' | 'idle';
@@ -21,7 +20,6 @@ export const DynamicLayout: React.FC<DynamicLayoutProps> = ({
   onPhaseChange
 }) => {
   const { triggerAnimation } = useAnimations();
-  const { wizard } = useUI();
   const { 
     mood, 
     isLearning, 

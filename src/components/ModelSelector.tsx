@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, Zap, Brain, Crown, Settings, Info } from 'lucide-react';
-import { useOllama } from '../contexts/OllamaContext';
+import { useOllama } from '../hooks/useOllama';
 import { AVAILABLE_MODELS } from '../utils/contentAnalyzer';
 
 interface ModelSelectorProps {
