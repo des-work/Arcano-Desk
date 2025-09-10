@@ -9,8 +9,8 @@ import {
   Trash2,
   CheckCircle
 } from 'lucide-react';
-import { useFiles } from '../contexts/FileContext';
-import { Assignment } from '../types';
+import { useFiles } from '../contexts/FileContext.tsx';
+import { Assignment } from '../types/index.ts';
 import toast from 'react-hot-toast';
 
 const CalendarPage: React.FC = () => {

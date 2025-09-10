@@ -8,7 +8,7 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react';
-import { useOllama } from '../contexts/OllamaContext';
+import { useOllama } from '../contexts/OllamaContext.tsx';
 import toast from 'react-hot-toast';
 
 const Settings: React.FC = () => {

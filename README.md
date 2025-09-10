@@ -1,220 +1,197 @@
-# 🎮✨ Arcano Desk - Magic Study Assistant
+# 🧙‍♂️ Arcano Desk - Magic Study Assistant
 
-A retro arcade-themed AI-powered study assistant that helps you organize, summarize, and interact with your study materials using local AI models.
+A powerful local desktop application that uses AI models to transform your study materials into magical learning experiences. Upload documents, generate intelligent summaries, create study materials, and get instant answers from your personal wizard assistant.
 
-![Arcano Desk](https://img.shields.io/badge/Version-1.0.0-neon-purple?style=for-the-badge&logo=react)
-![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0.0-3178C6?style=for-the-badge&logo=typescript)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.0-06B6D4?style=for-the-badge&logo=tailwindcss)
+## ✨ Features
 
-## 🌟 Features
+### 🧠 **Intelligent AI Model Selection**
+- **Automatic Model Selection**: Analyzes content complexity and chooses the optimal AI model
+- **Smart Content Analysis**: Evaluates word count, topic density, and complexity scores
+- **Model Transparency**: Shows which model was used and why
+- **Available Models**:
+  - `gemma2:2b` (1.6GB) - Lightning-fast for simple content
+  - `phi3:mini/latest` (2.2GB) - Balanced performance for most tasks
+  - `llama2:latest` (3.8GB) - Reliable for complex content
+  - `gemma2:latest` (5.4GB) - Advanced analysis capabilities
+  - `wizardlm-uncensored:13b` (7.4GB) - Exceptional understanding
+  - `gpt-oss:20b` (13GB) - Maximum power for expert analysis
 
-### 📚 **Smart File Processing**
-- **Multi-format Support**: PDF, Word (.docx), PowerPoint (.pptx), and Text files
-- **OCR Integration**: Automatically processes scanned PDFs and images
-- **AI-Powered Summaries**: Generate summaries with customizable length and format
-- **Key Information Extraction**: Automatically extracts key terms, dates, formulas, and reviews
+### 🔮 **Knowledge Forge**
+- **Topic Generation**: Create definitions, examples, explanations, and study guides
+- **Smart Suggestions**: Automatically suggests topics from your uploaded documents
+- **Depth Control**: Choose from brief, detailed, or comprehensive explanations
+- **Context Integration**: Uses your document context for better relevance
 
-### 🎯 **Study Assistant**
-- **Interactive Q&A**: Ask questions about your notes and get confident AI responses
-- **Context-Aware**: Select specific files to provide context for better answers
-- **Study Material Generation**: Create flashcards, practice questions, and study notes
-- **Multiple Summary Formats**: Paragraph, bullet points, outline, or Q&A format
+### 📚 **Document Processing**
+- **Multi-Format Support**: PDF, Word (.docx), PowerPoint (.pptx), and text files
+- **OCR Capabilities**: Extract text from scanned documents
+- **Intelligent Summaries**: Generate summaries with customizable length and format
+- **Study Materials**: Create flashcards, practice questions, and organized notes
 
-### 📖 **Library Management**
-- **Course Organization**: Organize materials by courses with custom colors
-- **Smart Search**: Search through file names and content
-- **File Preview**: Quick preview of file contents and AI-generated summaries
-- **Bulk Operations**: Upload multiple files at once
+### 🧙‍♂️ **Wizard Assistant**
+- **Q&A System**: Ask questions based on your uploaded documents
+- **Magical Personality**: Wizard-themed responses with full transparency
+- **Learning Progress**: Tracks your study materials and progress
+- **Smart Recommendations**: Suggests topics and study approaches
 
-### 📅 **Assignment Tracking**
-- **Built-in Calendar**: Visual calendar with assignment deadlines
-- **Priority System**: Mark assignments as high, medium, or low priority
-- **Status Tracking**: Track assignment progress (pending, in-progress, completed)
-- **Upcoming Assignments**: Quick view of upcoming deadlines
-
-### 🎨 **Retro Arcade Theme**
-- **Neon Purple Rainbow**: Vibrant neon color scheme
-- **Arcade Animations**: Glowing effects, floating elements, and smooth transitions
-- **Pixel Fonts**: Authentic retro gaming aesthetic
-- **Magic Elements**: Sparkles, zaps, and mystical UI components
+### 📅 **Study Management**
+- **Course Organization**: Organize materials by course or subject
+- **Assignment Tracking**: Calendar integration for due dates and priorities
+- **Progress Monitoring**: Track your learning journey
+- **Library System**: Keep all your study materials organized
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
-- **Node.js** (v16 or higher)
-- **Ollama** installed and running locally
-- **A local AI model** (e.g., llama2)
+- Node.js (v16 or higher)
+- Ollama installed and running
+- At least one AI model downloaded (recommended: `llama2:latest`)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/arcano-desk.git
-   cd arcano-desk
+   git clone https://github.com/des-work/Arcano-Desk.git
+   cd Arcano-Desk
    ```
 
 2. **Install dependencies**
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
 
-3. **Set up Ollama**
+3. **Start Ollama** (if not already running)
    ```bash
-   # Install Ollama (if not already installed)
-   # Visit https://ollama.ai for installation instructions
-   
-   # Start Ollama server
    ollama serve
-   
-   # Pull a model (in a new terminal)
-   ollama pull llama2
    ```
 
-4. **Start the application**
+4. **Download a model** (if you haven't already)
+   ```bash
+   ollama pull llama2:latest
+   ```
+
+5. **Start the application**
    ```bash
    npm start
    ```
 
-5. **Open your browser**
-   Navigate to `http://localhost:3000`
+6. **Open your browser** and navigate to `http://localhost:3000`
 
-## 🎮 Usage
+## 🎯 Usage
 
-### 1. **Setup Courses**
-- Click "New Course" to create your first course
-- Add course name and code (e.g., "Computer Science 101", "CS101")
-- Courses are automatically assigned random neon colors
+### 1. **Upload Documents**
+- Click "📚 Summon Scrolls" to upload your study materials
+- Supported formats: PDF, Word, PowerPoint, and text files
+- The wizard will automatically analyze and process your documents
 
-### 2. **Upload Files**
-- Select a course from the dropdown
-- Drag and drop files or click to browse
-- Supported formats: PDF, DOCX, PPTX, TXT
-- Files are automatically processed and summarized
+### 2. **Generate Knowledge**
+- Click "🔮 Knowledge Forge" to generate topics and explanations
+- Choose from definitions, examples, explanations, or study guides
+- Select depth level: brief, detailed, or comprehensive
 
-### 3. **Interact with Assistant**
-- Go to the Assistant page
-- Select files to provide context
-- Ask questions about your materials
-- Generate study materials like flashcards and practice questions
+### 3. **Ask Questions**
+- Click "🧙‍♂️ Oracle" to ask questions about your documents
+- The wizard will provide confident, well-organized answers
+- Full transparency about which AI model was used
 
-### 4. **Track Assignments**
-- Use the Calendar to add assignments
-- Set due dates, priorities, and descriptions
-- Track progress and view upcoming deadlines
+### 4. **Manage Models**
+- Click "⚙️ Model Forge" to select and manage AI models
+- View model capabilities and performance characteristics
+- Switch between models based on your needs
 
-## 🛠️ Configuration
+## 🛠️ Technical Details
 
-### AI Model Settings
-- **Model Selection**: Choose from available Ollama models
-- **Temperature**: Control response creativity (0-1)
-- **Top P**: Control response diversity (0-1)
-- **Max Tokens**: Set maximum response length
+### **Architecture**
+- **Frontend**: React 18 with TypeScript
+- **Styling**: Tailwind CSS with custom magical theme
+- **AI Integration**: Ollama API with local model support
+- **File Processing**: Mammoth (Word), PDF.js (PDF), Tesseract.js (OCR)
+- **State Management**: React Context API
 
-### File Processing
-- **OCR**: Automatically enabled for scanned PDFs
-- **Summary Length**: Short, medium, or long summaries
-- **Summary Format**: Paragraph, bullet, outline, or Q&A
+### **AI Model Selection Logic**
+The system automatically analyzes content and selects the optimal model:
 
-## 📁 Project Structure
-
+```typescript
+// Content Analysis Factors
+- Word Count: <500 (simple), 500-2000 (medium), 2000-5000 (complex), >5000 (very complex)
+- Topic Density: Technical terms and academic language detection
+- Sentence Complexity: Average sentence length analysis
+- Context Window: Ensures content fits within model limits
 ```
-arcano-desk/
-├── public/
-│   └── index.html
-├── src/
-│   ├── components/
-│   │   ├── FileUpload.tsx
-│   │   └── Header.tsx
-│   ├── contexts/
-│   │   ├── FileContext.tsx
-│   │   └── OllamaContext.tsx
-│   ├── pages/
-│   │   ├── Dashboard.tsx
-│   │   ├── Library.tsx
-│   │   ├── StudyAssistant.tsx
-│   │   ├── Calendar.tsx
-│   │   └── Settings.tsx
-│   ├── utils/
-│   │   └── fileProcessor.ts
-│   ├── types/
-│   │   └── index.ts
-│   ├── App.tsx
-│   ├── index.tsx
-│   └── index.css
-├── package.json
-├── tailwind.config.js
-└── README.md
-```
+
+### **Supported File Types**
+- **PDF**: Text extraction with OCR fallback
+- **Word (.docx)**: Full document processing
+- **PowerPoint (.pptx)**: Slide content extraction
+- **Text (.txt)**: Direct text processing
 
 ## 🎨 Customization
 
-### Theme Colors
-The app uses a neon purple rainbow theme with these main colors:
-- **Neon Purple**: `#8B5CF6`
-- **Neon Pink**: `#EC4899`
-- **Neon Cyan**: `#06B6D4`
-- **Neon Green**: `#10B981`
-- **Neon Yellow**: `#F59E0B`
+### **Themes**
+The app features a magical wizard theme with:
+- Neon purple and rainbow color schemes
+- Custom fonts (Cinzel, Uncial Antiqua, Old English Text MT)
+- Magical animations and effects
+- Responsive design for all screen sizes
 
-### Animations
-- **Glow Effects**: Neon glowing borders and text
-- **Floating Elements**: Smooth floating animations
-- **Pulse Effects**: Breathing light effects
-- **Slide Transitions**: Smooth page transitions
+### **Model Configuration**
+You can customize the AI model selection by:
+- Adding new models to the `AVAILABLE_MODELS` array
+- Adjusting complexity scoring thresholds
+- Modifying model selection logic in `contentAnalyzer.ts`
 
 ## 🔧 Troubleshooting
 
-### Ollama Connection Issues
-1. Ensure Ollama is running: `ollama serve`
-2. Check if models are available: `ollama list`
-3. Pull a model if needed: `ollama pull llama2`
-4. Restart the application
+### **Common Issues**
 
-### File Processing Issues
-1. Ensure file formats are supported (PDF, DOCX, PPTX, TXT)
-2. For large files, processing may take longer
-3. OCR processing requires more time for scanned documents
+1. **"Cannot find module 'path-browserify'"**
+   ```bash
+   npm install path-browserify --legacy-peer-deps
+   ```
 
-### Performance Tips
-1. Use smaller AI models for faster responses
-2. Process files in smaller batches
-3. Clear old files periodically to maintain performance
+2. **Ollama Connection Issues**
+   - Ensure Ollama is running: `ollama serve`
+   - Check if models are downloaded: `ollama list`
+   - Verify Ollama is accessible at `http://localhost:11434`
+
+3. **File Upload Problems**
+   - Check file format is supported
+   - Ensure file size is reasonable (<50MB recommended)
+   - Try with a smaller file first
+
+4. **Model Selection Issues**
+   - Verify models are installed: `ollama list`
+   - Check model names match exactly
+   - Ensure sufficient system resources
+
+## 📈 Performance Tips
+
+- **Model Selection**: Smaller models (2B-3B) for simple tasks, larger models (7B+) for complex analysis
+- **File Size**: Keep individual files under 50MB for optimal processing
+- **Batch Processing**: Process multiple small files rather than one large file
+- **Memory**: Ensure sufficient RAM for larger models (8GB+ recommended for 7B+ models)
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Please feel free to:
+- Report bugs and issues
+- Suggest new features
+- Submit pull requests
+- Improve documentation
 
-## 📝 License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- **Ollama** for providing local AI model capabilities
-- **React** and **TypeScript** for the robust frontend framework
-- **Tailwind CSS** for the beautiful styling system
-- **Tesseract.js** for OCR functionality
-- **Mammoth** for Word document processing
-- **PDF-parse** for PDF text extraction
-
-## 🎯 Roadmap
-
-- [ ] **Voice Input**: Add voice-to-text for hands-free interaction
-- [ ] **Mobile App**: React Native version for mobile devices
-- [ ] **Cloud Sync**: Sync data across devices
-- [ ] **Advanced OCR**: Better image processing and handwriting recognition
-- [ ] **Study Groups**: Collaborative study features
-- [ ] **Progress Analytics**: Study progress tracking and insights
-- [ ] **Plugin System**: Extensible architecture for custom features
+- **Ollama** for providing the local AI infrastructure
+- **React** and **Tailwind CSS** for the amazing development experience
+- **Lucide React** for the beautiful icons
+- **The open-source community** for all the amazing tools and libraries
 
 ---
 
-**Made with ✨ and lots of neon magic!** 🎮🌈
+**Made with ✨ magic and 🧙‍♂️ wizardry**
 
-*Transform your study sessions into an epic arcade adventure!*
+*Transform your study experience with the power of AI and a touch of magic!*

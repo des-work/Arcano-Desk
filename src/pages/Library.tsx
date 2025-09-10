@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  BookOpen, 
-  File, 
+import {
+  Search,
+  Filter,
+  Plus,
+  BookOpen,
+  File,
   Sparkles,
   Download,
   Eye,
   Trash2,
-  Edit3
+  Edit3,
+  Wand2,
+  Crown,
+  ScrollText,
+  Library as LibraryIcon
 } from 'lucide-react';
-import { useFiles } from '../contexts/FileContext';
-import { useOllama } from '../contexts/OllamaContext';
-import FileUpload from '../components/FileUpload';
+import { useFiles } from '../contexts/FileContext.tsx';
+import { useOllama } from '../contexts/OllamaContext.tsx';
+import FileUpload from '../components/FileUpload.tsx';
 import toast from 'react-hot-toast';
 
 const Library: React.FC = () => {
@@ -85,30 +89,39 @@ const Library: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Wizard's Library Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-        <div>
-          <h1 className="text-3xl font-pixel text-transparent bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan bg-clip-text neon-glow">
-            Library
-          </h1>
-          <p className="text-gray-400 font-arcade">Manage your study materials and courses</p>
+        <div className="relative">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+              <LibraryIcon className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-wizard text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-cyan-300">
+                🏰 Arcane Library
+              </h1>
+              <p className="text-purple-200/80 font-arcane text-lg">Guardians of Ancient Knowledge</p>
+            </div>
+          </div>
+          {/* Magical aura */}
+          <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-3xl -z-10 animate-pulse"></div>
         </div>
-        
-        <div className="flex space-x-3">
+
+        <div className="flex space-x-4">
           <button
             onClick={() => setShowNewCourse(true)}
-            className="px-4 py-2 bg-gradient-to-r from-neon-purple to-neon-pink text-white font-arcade rounded-lg hover:from-neon-pink hover:to-neon-purple transition-all duration-300 flex items-center space-x-2"
+            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-wizard rounded-2xl hover:from-purple-500 hover:to-pink-500 transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-purple-500/30 hover:scale-105"
           >
-            <Plus className="w-4 h-4" />
-            <span>New Course</span>
+            <Wand2 className="w-5 h-5" />
+            <span>✨ Forge Academy</span>
           </button>
-          
+
           <button
             onClick={() => setShowUpload(!showUpload)}
-            className="px-4 py-2 bg-gradient-to-r from-neon-cyan to-neon-green text-white font-arcade rounded-lg hover:from-neon-green hover:to-neon-cyan transition-all duration-300 flex items-center space-x-2"
+            className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-green-600 text-white font-wizard rounded-2xl hover:from-cyan-500 hover:to-green-500 transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-cyan-500/30 hover:scale-105"
           >
-            <BookOpen className="w-4 h-4" />
-            <span>Upload Files</span>
+            <ScrollText className="w-5 h-5" />
+            <span>📜 Summon Scrolls</span>
           </button>
         </div>
       </div>
@@ -117,7 +130,10 @@ const Library: React.FC = () => {
       {showNewCourse && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-arcade-bg border-2 border-neon-purple rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-pixel text-neon-purple mb-4">Create New Course</h2>
+            <h2 className="text-2xl font-wizard text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300 mb-6 flex items-center space-x-2">
+              <Crown className="w-6 h-6" />
+              <span>🏰 Forge New Academy</span>
+            </h2>
             
             <div className="space-y-4">
               <div>

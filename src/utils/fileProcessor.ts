@@ -1,6 +1,9 @@
 import mammoth from 'mammoth';
-import pdfParse from 'pdf-parse';
+import * as pdfjsLib from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export interface ProcessedFile {
   content: string;
@@ -35,12 +38,41 @@ const processTextFile = async (file: File): Promise<ProcessedFile> => {
 };
 
 const processPdfFile = async (file: File): Promise<ProcessedFile> => {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfData = await pdfParse(Buffer.from(arrayBuffer));
-  
-  // If PDF has no text content, try OCR
-  if (!pdfData.text || pdfData.text.trim().length === 0) {
-    console.log('PDF appears to be scanned, attempting OCR...');
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+
+    // Extract text from all pages
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      fullText += pageText + '\n';
+    }
+
+    // If PDF has no text content, try OCR
+    if (!fullText || fullText.trim().length === 0) {
+      console.log('PDF appears to be scanned, attempting OCR...');
+      const ocrResult = await performOCR(file);
+      return {
+        content: ocrResult,
+        type: 'pdf',
+        name: file.name,
+      };
+    }
+
+    return {
+      content: fullText,
+      type: 'pdf',
+      name: file.name,
+    };
+  } catch (error) {
+    console.error('PDF processing error:', error);
+    // Fallback to OCR if PDF processing fails
     const ocrResult = await performOCR(file);
     return {
       content: ocrResult,
@@ -48,12 +80,6 @@ const processPdfFile = async (file: File): Promise<ProcessedFile> => {
       name: file.name,
     };
   }
-  
-  return {
-    content: pdfData.text,
-    type: 'pdf',
-    name: file.name,
-  };
 };
 
 const processDocxFile = async (file: File): Promise<ProcessedFile> => {
@@ -106,7 +132,7 @@ export const extractKeyTerms = (content: string): string[] => {
 };
 
 export const extractDates = (content: string): string[] => {
-  const dateRegex = /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b|\b\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}\b|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b/gi;
+  const dateRegex = /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b/gi;
   return content.match(dateRegex) || [];
 };
 

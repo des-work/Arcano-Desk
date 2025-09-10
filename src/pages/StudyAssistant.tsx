@@ -9,8 +9,8 @@ import {
   File,
   X
 } from 'lucide-react';
-import { useFiles } from '../contexts/FileContext';
-import { useOllama } from '../contexts/OllamaContext';
+import { useFiles } from '../contexts/FileContext.tsx';
+import { useOllama } from '../contexts/OllamaContext.tsx';
 import toast from 'react-hot-toast';
 
 interface Message {
@@ -103,16 +103,28 @@ const StudyAssistant: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center space-x-3">
-          <Sparkles className="w-8 h-8 text-neon-purple animate-pulse-neon" />
-          <h1 className="text-3xl font-pixel text-transparent bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan bg-clip-text neon-glow">
-            Study Assistant
+      {/* Mystic Oracle Header */}
+      <div className="text-center space-y-6">
+        <div className="flex items-center justify-center space-x-4">
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+            <Sparkles className="w-8 h-8 text-white animate-pulse" />
+          </div>
+          <h1 className="text-4xl font-wizard text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-cyan-300">
+            🧙‍♂️ Mystic Oracle
           </h1>
-          <Zap className="w-8 h-8 text-neon-yellow animate-bounce-slow" />
+          <div className="p-3 bg-gradient-to-br from-cyan-500 to-green-500 rounded-2xl shadow-lg">
+            <Zap className="w-8 h-8 text-white animate-bounce" />
+          </div>
         </div>
-        <p className="text-gray-400 font-arcade">Ask me anything about your study materials!</p>
+        <p className="text-purple-200/80 font-arcane text-xl max-w-2xl mx-auto">
+          "Seek wisdom from the ancient scrolls, and the oracle shall reveal secrets untold..."
+        </p>
+        {/* Magical divider */}
+        <div className="flex items-center justify-center space-x-4">
+          <div className="w-16 h-px bg-gradient-to-r from-transparent to-purple-400"></div>
+          <div className="text-purple-400 font-rune text-lg">✦</div>
+          <div className="w-16 h-px bg-gradient-to-l from-transparent to-purple-400"></div>
+        </div>
       </div>
 
       {/* File Context Selector */}

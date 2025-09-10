@@ -39,9 +39,13 @@ code {
   background: linear-gradient(45deg, #EC4899, #8B5CF6);
 }
 
-/* Neon glow effects */
+/* Subtle glow effects */
+.glow-subtle {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
 .neon-glow {
-  text-shadow: 
+  text-shadow:
     0 0 5px currentColor,
     0 0 10px currentColor,
     0 0 15px currentColor,
