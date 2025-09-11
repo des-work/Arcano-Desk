@@ -14,7 +14,7 @@ import Settings from '../pages/Settings';
 // Import components
 import LaunchScreen from './LaunchScreen';
 import ErrorBoundary from './ErrorBoundary';
-import { OptimizedAnimationProvider } from '../animations/OptimizedAnimationEngine';
+import { AdvancedAnimationProvider } from '../animations';
 
 // Route protection component
 const ProtectedRoute: React.FC<{ 
@@ -80,7 +80,7 @@ const AppRouter: React.FC = () => {
   }
 
   return (
-    <OptimizedAnimationProvider>
+    <AdvancedAnimationProvider>
       <Router>
         <ErrorBoundary>
           <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 relative overflow-hidden">
@@ -150,7 +150,7 @@ const AppRouter: React.FC = () => {
           </div>
         </ErrorBoundary>
       </Router>
-    </OptimizedAnimationProvider>
+    </AdvancedAnimationProvider>
   );
 };
 

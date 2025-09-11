@@ -21,6 +21,17 @@ export {
   AdvancedAnimationProvider, 
   useAdvancedAnimations 
 } from './AdvancedAnimationEngine';
+
+// Optimized Animation System Exports
+export { 
+  OptimizedAnimationProvider, 
+  useOptimizedAnimations,
+  OptimizedAnimatedComponent 
+} from './OptimizedAnimationEngine';
+export { 
+  OptimizedParticleSystem,
+  OPTIMIZED_PARTICLE_CONFIGS 
+} from './OptimizedParticleSystem';
 export { 
   UltraParticleSystem, 
   PARTICLE_SYSTEMS 

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useFiles } from '../contexts/FileContext';
 import { useOllama } from '../contexts/OllamaContext';
-import { useOptimizedAnimations } from '../animations/OptimizedAnimationEngine';
+import { useAnimations } from '../animations';
 
 interface EnhancedWizardProps {
   isLearning?: boolean;
@@ -53,7 +53,7 @@ const EnhancedWizard: React.FC<EnhancedWizardProps> = ({
   const navigate = useNavigate();
   const { files, courses, studyMaterials } = useFiles();
   const { isConnected, isLoading } = useOllama();
-  const { triggerAnimation } = useOptimizedAnimations();
+  const { triggerAnimation } = useAnimations();
 
   // Enhanced wizard state
   const [wizardState, setWizardState] = useState<WizardState>({
