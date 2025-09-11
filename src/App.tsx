@@ -4,12 +4,16 @@ import { StudyGuideGenerator } from './components/StudyGuideGenerator.tsx';
 import { StudyGuideDisplay } from './components/StudyGuideDisplay.tsx';
 import { EnhancedStudyGuideGenerator } from './components/EnhancedStudyGuideGenerator.tsx';
 import { EnhancedUploadPhase } from './components/EnhancedUploadPhase.tsx';
+import { StreamlinedStudyGuideGenerator } from './components/StreamlinedStudyGuideGenerator.tsx';
+import { StudyGuideCustomizer } from './components/StudyGuideCustomizer.tsx';
 import { ProcessedDocument } from './utils/DocumentProcessor.ts';
 import { OllamaProvider } from './contexts/OllamaContext.tsx';
+import { OptimizedOllamaProvider } from './contexts/OptimizedOllamaContext.tsx';
+import { RobustOllamaProvider } from './contexts/RobustOllamaContext.tsx';
 
 function AppContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
-  const [currentPhase, setCurrentPhase] = useState<'welcome' | 'upload' | 'library' | 'summary'>('welcome');
+  const [currentPhase, setCurrentPhase] = useState<'welcome' | 'upload' | 'library' | 'summary' | 'customize' | 'generating'>('welcome');
   const [aiStatus, setAiStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [studyGuide, setStudyGuide] = useState<any[]>([]);
   const [showStudyGuide, setShowStudyGuide] = useState(false);
@@ -17,6 +21,8 @@ function AppContent() {
   const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [generatedStudyGuide, setGeneratedStudyGuide] = useState<any[]>([]);
+  const [isCustomizing, setIsCustomizing] = useState(false);
 
   // Simulate AI connection
   useEffect(() => {
@@ -44,9 +50,22 @@ function AppContent() {
   // Handle direct summary generation
   const handleGenerateStudyGuide = () => {
     if (documents.length > 0) {
-      setShowStudyGuide(true);
-      setCurrentPhase('summary');
+      setCurrentPhase('generating');
     }
+  };
+
+  // Handle study guide completion
+  const handleStudyGuideComplete = (studyGuide: any[]) => {
+    setGeneratedStudyGuide(studyGuide);
+    setCurrentPhase('customize');
+    setIsCustomizing(true);
+  };
+
+  // Handle customization completion
+  const handleCustomizationComplete = (finalGuide: any[]) => {
+    setStudyGuide(finalGuide);
+    setCurrentPhase('summary');
+    setIsCustomizing(false);
   };
 
   // Reset upload state
@@ -157,7 +176,32 @@ function AppContent() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-8">
-        {/* Study Guide Generator */}
+        {/* Streamlined Study Guide Generator */}
+        {currentPhase === 'generating' && (
+          <div className="mb-8">
+            <StreamlinedStudyGuideGenerator
+              documents={documents}
+              onComplete={handleStudyGuideComplete}
+              onCustomize={handleStudyGuideComplete}
+            />
+          </div>
+        )}
+
+        {/* Study Guide Customizer */}
+        {currentPhase === 'customize' && isCustomizing && (
+          <div className="mb-8">
+            <StudyGuideCustomizer
+              studyGuide={generatedStudyGuide}
+              onCustomize={(guide, settings) => {
+                // Update settings in real-time
+                console.log('Settings updated:', settings);
+              }}
+              onGenerate={handleCustomizationComplete}
+            />
+          </div>
+        )}
+
+        {/* Legacy Study Guide Generator */}
         {showStudyGuide && currentPhase === 'summary' && (
           <div className="mb-8">
             <StudyGuideGenerator
@@ -378,7 +422,11 @@ function AppContent() {
 function App() {
   return (
     <OllamaProvider>
-      <AppContent />
+      <OptimizedOllamaProvider>
+        <RobustOllamaProvider>
+          <AppContent />
+        </RobustOllamaProvider>
+      </OptimizedOllamaProvider>
     </OllamaProvider>
   );
 }
