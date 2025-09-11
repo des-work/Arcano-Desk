@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, useAnimation, useMotionValue, useTransform } from 'framer-motion';
-import { useSpring, animated, useTrail, useTransition } from '@react-spring/web';
 
 // Intelligent Animation Types
 interface AnimationContext {

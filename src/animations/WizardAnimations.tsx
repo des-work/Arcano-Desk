@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import { useAnimations } from './AnimationEngine';
 import { AnimationType, AnimationIntensity } from './AnimationTypes';
 
@@ -89,39 +88,47 @@ export const WizardAnimations: React.FC<WizardAnimationsProps> = ({
     }
   }, [currentSpell, onSpellComplete]);
 
-  // Spring animations for smooth motion
-  const wizardSpring = useSpring({
-    scale: isLearning ? 1.1 : 1,
-    rotate: isLearning ? [0, 5, -5, 0] : 0,
-    config: { tension: 300, friction: 30 }
-  });
+  // Framer Motion spring animations for smooth motion
+  const wizardSpring = useSpring(0, { stiffness: 300, damping: 30 });
+  const wizardScale = useTransform(wizardSpring, [0, 1], [1, isLearning ? 1.1 : 1]);
+  const wizardRotate = useTransform(wizardSpring, [0, 1], [0, isLearning ? 5 : 0]);
 
-  const glowSpring = useSpring({
-    opacity: hasNewKnowledge ? [0.5, 1, 0.5] : 0.3,
-    scale: hasNewKnowledge ? [1, 1.2, 1] : 1,
-    config: { tension: 200, friction: 20 }
-  });
+  const glowSpring = useSpring(0, { stiffness: 200, damping: 20 });
+  const glowOpacity = useTransform(glowSpring, [0, 1], [0.3, hasNewKnowledge ? 1 : 0.3]);
+  const glowScale = useTransform(glowSpring, [0, 1], [1, hasNewKnowledge ? 1.2 : 1]);
 
-  const spellSpring = useSpring({
-    scale: isCasting ? [1, 1.2, 1] : 1,
-    rotate: isCasting ? [0, 360] : 0,
-    config: { tension: 400, friction: 25 }
-  });
+  const spellSpring = useSpring(0, { stiffness: 400, damping: 25 });
+  const spellScale = useTransform(spellSpring, [0, 1], [1, isCasting ? 1.2 : 1]);
+  const spellRotate = useTransform(spellSpring, [0, 1], [0, isCasting ? 360 : 0]);
+
+  // Update springs based on state changes
+  useEffect(() => {
+    wizardSpring.set(isLearning ? 1 : 0);
+  }, [isLearning, wizardSpring]);
+
+  useEffect(() => {
+    glowSpring.set(hasNewKnowledge ? 1 : 0);
+  }, [hasNewKnowledge, glowSpring]);
+
+  useEffect(() => {
+    spellSpring.set(isCasting ? 1 : 0);
+  }, [isCasting, spellSpring]);
 
   return (
     <div className="relative">
       {/* Wizard Character */}
-      <animated.div
+      <motion.div
         style={{
-          transform: `scale(${wizardSpring.scale}) rotate(${wizardSpring.rotate}deg)`
+          scale: wizardScale,
+          rotate: wizardRotate
         }}
         className="relative"
       >
         {/* Glow Effect */}
-        <animated.div
+        <motion.div
           style={{
-            opacity: glowSpring.opacity,
-            transform: `scale(${glowSpring.scale})`
+            opacity: glowOpacity,
+            scale: glowScale
           }}
           className="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-pink-400/30 rounded-full blur-xl"
         />
@@ -152,9 +159,10 @@ export const WizardAnimations: React.FC<WizardAnimationsProps> = ({
               className="absolute inset-0 pointer-events-none"
             >
               {/* Magic Circle */}
-              <animated.div
+              <motion.div
                 style={{
-                  transform: `scale(${spellSpring.scale}) rotate(${spellSpring.rotate}deg)`
+                  scale: spellScale,
+                  rotate: spellRotate
                 }}
                 className="absolute inset-0 border-4 border-purple-400/50 rounded-full"
               />
@@ -295,7 +303,7 @@ export const WizardAnimations: React.FC<WizardAnimationsProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </animated.div>
+      </motion.div>
       
       {/* Spell Name Display */}
       <AnimatePresence>

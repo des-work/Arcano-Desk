@@ -5,12 +5,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Wifi, 
   WifiOff, 
   Loader, 
   CheckCircle, 
   AlertCircle, 
-  Settings, 
   Cpu,
   Zap,
   RefreshCw
@@ -27,7 +25,6 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
   showDetails = true
 }) => {
   const { 
-    isConnected, 
     isLoading, 
     models, 
     currentModel, 

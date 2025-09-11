@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import { useAnimations } from '../animations';
 import { AnimatedWizard } from './AnimatedWizard';
 import { InteractiveButton } from '../animations';
@@ -78,28 +77,39 @@ export const DynamicLayout: React.FC<DynamicLayoutProps> = ({
   }, [currentPhase, changeMood, castSpell, triggerAnimation, config]);
 
   // Wizard positioning springs
-  const wizardPositionSpring = useSpring({
-    from: { x: 0, y: 0, scale: 1 },
-    to: {
-      x: config.wizardPosition === 'right' ? 200 : 
-         config.wizardPosition === 'left' ? -200 : 0,
-      y: config.wizardPosition === 'bottom' ? 100 : 0,
-      scale: config.wizardSize === 'large' ? 1.2 : 
-             config.wizardSize === 'medium' ? 1 : 0.8
-    },
-    config: { tension: 300, friction: 30 }
-  });
+  const wizardPositionSpring = useSpring(0, { stiffness: 300, damping: 30 });
+  const wizardX = useTransform(wizardPositionSpring, [0, 1], [
+    0, 
+    config.wizardPosition === 'right' ? 200 : 
+    config.wizardPosition === 'left' ? -200 : 0
+  ]);
+  const wizardY = useTransform(wizardPositionSpring, [0, 1], [
+    0, 
+    config.wizardPosition === 'bottom' ? 100 : 0
+  ]);
+  const wizardScale = useTransform(wizardPositionSpring, [0, 1], [
+    1, 
+    config.wizardSize === 'large' ? 1.2 : 
+    config.wizardSize === 'medium' ? 1 : 0.8
+  ]);
 
   // Content positioning spring
-  const contentPositionSpring = useSpring({
-    from: { x: 0, y: 0 },
-    to: {
-      x: config.wizardPosition === 'right' ? -100 : 
-         config.wizardPosition === 'left' ? 100 : 0,
-      y: config.wizardPosition === 'bottom' ? -50 : 0
-    },
-    config: { tension: 200, friction: 25 }
-  });
+  const contentPositionSpring = useSpring(0, { stiffness: 200, damping: 25 });
+  const contentX = useTransform(contentPositionSpring, [0, 1], [
+    0, 
+    config.wizardPosition === 'right' ? -100 : 
+    config.wizardPosition === 'left' ? 100 : 0
+  ]);
+  const contentY = useTransform(contentPositionSpring, [0, 1], [
+    0, 
+    config.wizardPosition === 'bottom' ? -50 : 0
+  ]);
+
+  // Update springs based on phase changes
+  useEffect(() => {
+    wizardPositionSpring.set(1);
+    contentPositionSpring.set(1);
+  }, [currentPhase, wizardPositionSpring, contentPositionSpring]);
 
   // Wizard messages based on interactions
   const getWizardMessage = () => {
@@ -125,8 +135,12 @@ export const DynamicLayout: React.FC<DynamicLayoutProps> = ({
     if (!showWizard) return null;
 
     return (
-      <animated.div
-        style={wizardPositionSpring}
+      <motion.div
+        style={{
+          x: wizardX,
+          y: wizardY,
+          scale: wizardScale
+        }}
         className="absolute z-20"
       >
         <div className="relative">
@@ -155,7 +169,7 @@ export const DynamicLayout: React.FC<DynamicLayoutProps> = ({
             </p>
           </motion.div>
         </div>
-      </animated.div>
+      </motion.div>
     );
   };
 
@@ -165,12 +179,15 @@ export const DynamicLayout: React.FC<DynamicLayoutProps> = ({
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900" />
       
       {/* Content Area */}
-      <animated.div
-        style={contentPositionSpring}
+      <motion.div
+        style={{
+          x: contentX,
+          y: contentY
+        }}
         className="relative z-10 w-full h-full"
       >
         {children}
-      </animated.div>
+      </motion.div>
 
       {/* Wizard Character */}
       {renderWizard()}

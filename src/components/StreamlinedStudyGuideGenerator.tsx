@@ -44,10 +44,8 @@ export const StreamlinedStudyGuideGenerator: React.FC<StreamlinedStudyGuideGener
   const { 
     generateSummary, 
     generateStudyMaterial, 
-    isLoading: aiLoading, 
     isConnected, 
-    connectionStatus,
-    currentModel 
+    connectionStatus
   } = useRobustOllama();
   const [studyGuide, setStudyGuide] = useState<StudyGuideSection[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);

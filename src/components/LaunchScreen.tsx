@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import { useAnimations } from '../animations';
 import { AnimatedWizard } from './AnimatedWizard';
 import { SparkleRain, MagicalDust } from '../animations';
@@ -61,26 +60,25 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
   }, [phase, wizardMessages]);
 
   // Title animation spring
-  const titleSpring = useSpring({
-    from: { opacity: 0, y: 100, scale: 0.5 },
-    to: { 
-      opacity: phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0,
-      y: phase === 'title' || phase === 'wizard' || phase === 'complete' ? 0 : 100,
-      scale: phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0.5
-    },
-    config: { tension: 300, friction: 30 }
-  });
+  const titleSpring = useSpring(0, { stiffness: 300, damping: 30 });
+  const titleOpacity = useTransform(titleSpring, [0, 1], [0, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0]);
+  const titleY = useTransform(titleSpring, [0, 1], [100, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 0 : 100]);
+  const titleScale = useTransform(titleSpring, [0, 1], [0.5, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0.5]);
 
   // Wizard animation spring
-  const wizardSpring = useSpring({
-    from: { opacity: 0, scale: 0, rotate: -180 },
-    to: {
-      opacity: phase === 'wizard' || phase === 'complete' ? 1 : 0,
-      scale: phase === 'wizard' || phase === 'complete' ? 1 : 0,
-      rotate: phase === 'wizard' || phase === 'complete' ? 0 : -180
-    },
-    config: { tension: 200, friction: 25 }
-  });
+  const wizardSpring = useSpring(0, { stiffness: 200, damping: 25 });
+  const wizardOpacity = useTransform(wizardSpring, [0, 1], [0, phase === 'wizard' || phase === 'complete' ? 1 : 0]);
+  const wizardScale = useTransform(wizardSpring, [0, 1], [0, phase === 'wizard' || phase === 'complete' ? 1 : 0]);
+  const wizardRotate = useTransform(wizardSpring, [0, 1], [-180, phase === 'wizard' || phase === 'complete' ? 0 : -180]);
+
+  // Update springs based on phase changes
+  useEffect(() => {
+    titleSpring.set(phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0);
+  }, [phase, titleSpring]);
+
+  useEffect(() => {
+    wizardSpring.set(phase === 'wizard' || phase === 'complete' ? 1 : 0);
+  }, [phase, wizardSpring]);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-black via-purple-900 to-indigo-900 flex flex-col items-center justify-center overflow-hidden">
@@ -120,8 +118,12 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
       </div>
 
       {/* Title Card */}
-      <animated.div
-        style={titleSpring}
+      <motion.div
+        style={{
+          opacity: titleOpacity,
+          y: titleY,
+          scale: titleScale
+        }}
         className="text-center mb-16 relative z-10"
       >
         <motion.div
@@ -170,11 +172,15 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
             Your Magical Study Companion
           </motion.p>
         </motion.div>
-      </animated.div>
+      </motion.div>
 
       {/* Wizard Character */}
-      <animated.div
-        style={wizardSpring}
+      <motion.div
+        style={{
+          opacity: wizardOpacity,
+          scale: wizardScale,
+          rotate: wizardRotate
+        }}
         className="relative z-10"
       >
         <div className="text-center">
@@ -202,7 +208,7 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
             )}
           </AnimatePresence>
         </div>
-      </animated.div>
+      </motion.div>
 
       {/* Loading Indicator */}
       <AnimatePresence>

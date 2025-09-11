@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, useAnimation } from 'framer-motion';
-import { useSpring, animated, useTrail, useTransition } from '@react-spring/web';
 
 // Advanced Particle Types
 interface Particle {

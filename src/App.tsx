@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { StudyGuideGenerator } from './components/StudyGuideGenerator.tsx';
-import { StudyGuideDisplay } from './components/StudyGuideDisplay.tsx';
-import { EnhancedStudyGuideGenerator } from './components/EnhancedStudyGuideGenerator.tsx';
-import { EnhancedUploadPhase } from './components/EnhancedUploadPhase.tsx';
-import { StreamlinedStudyGuideGenerator } from './components/StreamlinedStudyGuideGenerator.tsx';
-import { StudyGuideCustomizer } from './components/StudyGuideCustomizer.tsx';
 import { ProcessedDocument } from './utils/DocumentProcessor.ts';
 import { OllamaProvider } from './contexts/OllamaContext.tsx';
 import { OptimizedOllamaProvider } from './contexts/OptimizedOllamaContext.tsx';
 import { RobustOllamaProvider } from './contexts/RobustOllamaContext.tsx';
+import { PerformanceMonitor } from './components/PerformanceMonitor.tsx';
+import { 
+  LazyStudyGuideGenerator,
+  LazyEnhancedStudyGuideGenerator,
+  LazyStreamlinedStudyGuideGenerator,
+  LazyStudyGuideCustomizer,
+  LazyStudyGuideDisplay,
+  LazyEnhancedUploadPhase,
+  preloadCriticalComponents
+} from './utils/codeSplitting.ts';
 
 function AppContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
@@ -31,6 +35,11 @@ function AppContent() {
       setAiStatus('connected');
     }, 2000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Preload critical components
+  useEffect(() => {
+    preloadCriticalComponents();
   }, []);
 
   const handlePhaseChange = (phase: 'upload' | 'library' | 'summary') => {
@@ -101,6 +110,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <Toaster position="top-right" />
+      <PerformanceMonitor showDebug={process.env.NODE_ENV === 'development'} />
 
       {/* Success Animation Overlay */}
       {showSuccessAnimation && (
@@ -179,62 +189,72 @@ function AppContent() {
         {/* Streamlined Study Guide Generator */}
         {currentPhase === 'generating' && (
           <div className="mb-8">
-            <StreamlinedStudyGuideGenerator
-              documents={documents}
-              onComplete={handleStudyGuideComplete}
-              onCustomize={handleStudyGuideComplete}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="text-purple-300">Loading generator...</div></div>}>
+              <LazyStreamlinedStudyGuideGenerator
+                documents={documents}
+                onComplete={handleStudyGuideComplete}
+                onCustomize={handleStudyGuideComplete}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* Study Guide Customizer */}
         {currentPhase === 'customize' && isCustomizing && (
           <div className="mb-8">
-            <StudyGuideCustomizer
-              studyGuide={generatedStudyGuide}
-              onCustomize={(guide, settings) => {
-                // Update settings in real-time
-                console.log('Settings updated:', settings);
-              }}
-              onGenerate={handleCustomizationComplete}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="text-purple-300">Loading customizer...</div></div>}>
+              <LazyStudyGuideCustomizer
+                studyGuide={generatedStudyGuide}
+                onCustomize={(guide, settings) => {
+                  // Update settings in real-time
+                  console.log('Settings updated:', settings);
+                }}
+                onGenerate={handleCustomizationComplete}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* Legacy Study Guide Generator */}
         {showStudyGuide && currentPhase === 'summary' && (
           <div className="mb-8">
-            <StudyGuideGenerator
-              documents={documents}
-              onGenerate={(generatedGuide) => {
-                setStudyGuide(generatedGuide);
-                setShowStudyGuide(false);
-              }}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="text-purple-300">Loading generator...</div></div>}>
+              <LazyStudyGuideGenerator
+                documents={documents}
+                onGenerate={(generatedGuide) => {
+                  setStudyGuide(generatedGuide);
+                  setShowStudyGuide(false);
+                }}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* Enhanced Study Guide Generator */}
         {showEnhancedStudyGuide && (
           <div className="mb-8">
-            <EnhancedStudyGuideGenerator
-              documents={documents}
-              onGenerate={(generatedGuide) => {
-                setStudyGuide(generatedGuide);
-                setShowEnhancedStudyGuide(false);
-              }}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="text-purple-300">Loading enhanced generator...</div></div>}>
+              <LazyEnhancedStudyGuideGenerator
+                documents={documents}
+                onGenerate={(generatedGuide) => {
+                  setStudyGuide(generatedGuide);
+                  setShowEnhancedStudyGuide(false);
+                }}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* Study Guide Display */}
         {studyGuide.length > 0 && !showStudyGuide && !showEnhancedStudyGuide && (
           <div className="mb-8">
-            <StudyGuideDisplay
-              studyGuide={studyGuide}
-              onEdit={() => setShowStudyGuide(true)}
-              onExport={() => console.log('Exporting study guide...')}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="text-purple-300">Loading display...</div></div>}>
+              <LazyStudyGuideDisplay
+                studyGuide={studyGuide}
+                onEdit={() => setShowStudyGuide(true)}
+                onExport={() => console.log('Exporting study guide...')}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -287,10 +307,12 @@ function AppContent() {
 
         {currentPhase === 'upload' && (
           <div className="max-w-4xl mx-auto">
-            <EnhancedUploadPhase
-              onDocumentsProcessed={handleDocumentsProcessed}
-              onGenerateStudyGuide={handleGenerateStudyGuide}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="text-purple-300">Loading upload interface...</div></div>}>
+              <LazyEnhancedUploadPhase
+                onDocumentsProcessed={handleDocumentsProcessed}
+                onGenerateStudyGuide={handleGenerateStudyGuide}
+              />
+            </Suspense>
             
             {/* Navigation */}
             <div className="flex justify-center gap-4 mt-8">

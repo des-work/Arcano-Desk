@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { useSpring, animated } from '@react-spring/web';
 import { useAnimations } from './AnimationEngine';
 
 interface InteractiveButtonProps {
