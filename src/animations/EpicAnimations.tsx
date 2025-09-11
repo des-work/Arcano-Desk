@@ -291,7 +291,7 @@ export const EpicAnimation: React.FC<EpicAnimationProps> = ({
             ease: 'easeOut'
           }}
         />
-      )}
+      ))}
 
       {/* Central Magic Circle */}
       <motion.div

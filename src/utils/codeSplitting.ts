@@ -1,4 +1,4 @@
-import { lazy, ComponentType } from 'react';
+import React, { lazy, ComponentType } from 'react';
 
 // Lazy load main components
 export const LazyStudyGuideGenerator = lazy(() => import('../components/StudyGuideGenerator'));
@@ -7,38 +7,40 @@ export const LazyStreamlinedStudyGuideGenerator = lazy(() => import('../componen
 export const LazyStudyGuideCustomizer = lazy(() => import('../components/StudyGuideCustomizer'));
 export const LazyStudyGuideDisplay = lazy(() => import('../components/StudyGuideDisplay'));
 export const LazyEnhancedUploadPhase = lazy(() => import('../components/EnhancedUploadPhase'));
-export const LazyLibraryPhase = lazy(() => import('../components/LibraryPhase'));
-export const LazySummaryPhase = lazy(() => import('../components/SummaryPhase'));
+export const LazyDocumentUploadProcessor = lazy(() => import('../components/DocumentUploadProcessor'));
+export const LazyDocumentProcessingDemo = lazy(() => import('../components/DocumentProcessingDemo'));
+// export const LazyLibraryPhase = lazy(() => import('../components/LibraryPhase'));
+// export const LazySummaryPhase = lazy(() => import('../components/SummaryPhase'));
 
-// Lazy load animation components
-export const LazyEpicAnimations = lazy(() => import('../animations/EpicAnimations'));
-export const LazyWizardAnimations = lazy(() => import('../animations/WizardAnimations'));
-export const LazyParticleEffects = lazy(() => import('../animations/ParticleEffects'));
-export const LazyInteractiveAnimations = lazy(() => import('../animations/InteractiveAnimations'));
-export const LazyUltraParticleSystem = lazy(() => import('../animations/UltraParticleSystem'));
-export const LazyIntelligentOrchestrator = lazy(() => import('../animations/IntelligentOrchestrator'));
+// Lazy load animation components (commented out for now)
+// export const LazyEpicAnimations = lazy(() => import('../animations/EpicAnimations'));
+// export const LazyWizardAnimations = lazy(() => import('../animations/WizardAnimations'));
+// export const LazyParticleEffects = lazy(() => import('../animations/ParticleEffects'));
+// export const LazyInteractiveAnimations = lazy(() => import('../animations/InteractiveAnimations'));
+// export const LazyUltraParticleSystem = lazy(() => import('../animations/UltraParticleSystem'));
+// export const LazyIntelligentOrchestrator = lazy(() => import('../animations/IntelligentOrchestrator'));
 
-// Lazy load pages
-export const LazyDashboard = lazy(() => import('../pages/Dashboard'));
-export const LazyLibrary = lazy(() => import('../pages/Library'));
-export const LazyStudyAssistant = lazy(() => import('../pages/StudyAssistant'));
-export const LazyCalendar = lazy(() => import('../pages/Calendar'));
-export const LazySettings = lazy(() => import('../pages/Settings'));
+// Lazy load pages (commented out for now)
+// export const LazyDashboard = lazy(() => import('../pages/Dashboard'));
+// export const LazyLibrary = lazy(() => import('../pages/Library'));
+// export const LazyStudyAssistant = lazy(() => import('../pages/StudyAssistant'));
+// export const LazyCalendar = lazy(() => import('../pages/Calendar'));
+// export const LazySettings = lazy(() => import('../pages/Settings'));
 
-// Preload critical components
+// Preload critical components (commented out for now)
 export const preloadCriticalComponents = () => {
   // Preload components that are likely to be used immediately
-  import('../components/StudyGuideDisplay');
-  import('../components/EnhancedUploadPhase');
-  import('../components/Header');
-  import('../components/AnimatedWizard');
+  // import('../components/StudyGuideDisplay');
+  // import('../components/EnhancedUploadPhase');
+  // import('../components/Header');
+  // import('../components/AnimatedWizard');
 };
 
-// Preload animation components
+// Preload animation components (commented out for now)
 export const preloadAnimationComponents = () => {
-  import('../animations/WizardAnimations');
-  import('../animations/ParticleEffects');
-  import('../animations/InteractiveAnimations');
+  // import('../animations/WizardAnimations');
+  // import('../animations/ParticleEffects');
+  // import('../animations/InteractiveAnimations');
 };
 
 // Preload all components (for when user is idle)
@@ -46,20 +48,20 @@ export const preloadAllComponents = () => {
   preloadCriticalComponents();
   preloadAnimationComponents();
   
-  // Preload other components
-  import('../components/StudyGuideGenerator');
-  import('../components/EnhancedStudyGuideGenerator');
-  import('../components/StreamlinedStudyGuideGenerator');
-  import('../components/StudyGuideCustomizer');
-  import('../components/LibraryPhase');
-  import('../components/SummaryPhase');
+  // Preload other components (commented out for now to avoid build issues)
+  // import('../components/StudyGuideGenerator');
+  // import('../components/EnhancedStudyGuideGenerator');
+  // import('../components/StreamlinedStudyGuideGenerator');
+  // import('../components/StudyGuideCustomizer');
+  // import('../components/LibraryPhase');
+  // import('../components/SummaryPhase');
   
-  // Preload pages
-  import('../pages/Dashboard');
-  import('../pages/Library');
-  import('../pages/StudyAssistant');
-  import('../pages/Calendar');
-  import('../pages/Settings');
+  // Preload pages (commented out for now)
+  // import('../pages/Dashboard');
+  // import('../pages/Library');
+  // import('../pages/StudyAssistant');
+  // import('../pages/Calendar');
+  // import('../pages/Settings');
 };
 
 // Bundle analyzer utility
@@ -110,14 +112,12 @@ export const safeLazyImport = <T extends ComponentType<any>>(
       console.error('Failed to load component:', error);
       // Return a fallback component
       return {
-        default: () => (
-          <div className="flex items-center justify-center p-8">
-            <div className="text-center">
-              <div className="text-red-400 text-4xl mb-4">⚠️</div>
-              <h3 className="text-lg font-semibold text-red-300 mb-2">Component Load Error</h3>
-              <p className="text-sm text-gray-400">Failed to load component. Please refresh the page.</p>
-            </div>
-          </div>
+        default: () => React.createElement('div', { className: 'flex items-center justify-center p-8' },
+          React.createElement('div', { className: 'text-center' },
+            React.createElement('div', { className: 'text-red-400 text-4xl mb-4' }, '⚠️'),
+            React.createElement('h3', { className: 'text-lg font-semibold text-red-300 mb-2' }, 'Component Load Error'),
+            React.createElement('p', { className: 'text-sm text-gray-400' }, 'Failed to load component. Please refresh the page.')
+          )
         )
       };
     })

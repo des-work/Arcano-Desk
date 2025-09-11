@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Animation System Exports
 export { AnimationProvider, useAnimations, AnimatedComponent, EpicAnimation } from './AnimationEngine';
 export { WizardAnimations, LoadingAnimation } from './WizardAnimations';
@@ -149,11 +151,7 @@ export const optimizeAnimations = () => {
 
 // Animation Context Provider
 export const AnimationContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <AnimationProvider>
-      {children}
-    </AnimationProvider>
-  );
+  return React.createElement(AnimationProvider, null, children);
 };
 
 export default AnimationContextProvider;

@@ -367,12 +367,15 @@ const EnhancedWizard: React.FC<EnhancedWizardProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
             >
-              {spellEffects.find(e => e.name === currentEffect)?.icon && (
-                <spellEffects.find(e => e.name === currentEffect)!.icon 
-                  size={32} 
-                  className={spellEffects.find(e => e.name === currentEffect)!.color} 
-                />
-              )}
+              {spellEffects.find(e => e.name === currentEffect)?.icon && (() => {
+                const IconComponent = spellEffects.find(e => e.name === currentEffect)!.icon;
+                return (
+                  <IconComponent 
+                    size={32} 
+                    className={spellEffects.find(e => e.name === currentEffect)!.color} 
+                  />
+                );
+              })()}
             </motion.div>
           )}
         </AnimatePresence>

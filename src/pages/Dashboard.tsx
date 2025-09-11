@@ -289,6 +289,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+    </div>
 
       {/* Model Selector Modal */}
       <ModelSelector 
