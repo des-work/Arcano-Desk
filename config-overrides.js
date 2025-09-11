@@ -16,6 +16,7 @@ module.exports = function override(config, env) {
     path: require.resolve('path-browserify'),
     buffer: require.resolve('buffer'),
     assert: require.resolve('assert'),
+    process: require.resolve('process/browser'),
   };
 
   // Add buffer to webpack's provide plugin

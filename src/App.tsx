@@ -3,6 +3,9 @@ import { Toaster } from 'react-hot-toast';
 import { StudyGuideGenerator } from './components/StudyGuideGenerator.tsx';
 import { StudyGuideDisplay } from './components/StudyGuideDisplay.tsx';
 import { EnhancedStudyGuideGenerator } from './components/EnhancedStudyGuideGenerator.tsx';
+import { EnhancedUploadPhase } from './components/EnhancedUploadPhase.tsx';
+import { ProcessedDocument } from './utils/DocumentProcessor.ts';
+import { OllamaProvider } from './contexts/OllamaContext.tsx';
 
 function AppContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
@@ -11,7 +14,9 @@ function AppContent() {
   const [studyGuide, setStudyGuide] = useState<any[]>([]);
   const [showStudyGuide, setShowStudyGuide] = useState(false);
   const [showEnhancedStudyGuide, setShowEnhancedStudyGuide] = useState(false);
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
+  const [uploadComplete, setUploadComplete] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   // Simulate AI connection
   useEffect(() => {
@@ -26,15 +31,30 @@ function AppContent() {
     setCurrentPhase(phase);
   };
 
-  const handleDocumentUpload = (file: File) => {
-    const newDocument = {
-      id: Date.now().toString(),
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      uploadDate: new Date(),
-    };
-    setDocuments(prev => [...prev, newDocument]);
+  // Handle documents processed from enhanced upload
+  const handleDocumentsProcessed = (processedDocs: ProcessedDocument[]) => {
+    setDocuments(prev => [...prev, ...processedDocs]);
+    setUploadComplete(true);
+    
+    // Show success animation
+    setShowSuccessAnimation(true);
+    setTimeout(() => setShowSuccessAnimation(false), 3000);
+  };
+
+  // Handle direct summary generation
+  const handleGenerateStudyGuide = () => {
+    if (documents.length > 0) {
+      setShowStudyGuide(true);
+      setCurrentPhase('summary');
+    }
+  };
+
+  // Reset upload state
+  const resetUploadState = () => {
+    setDocuments([]);
+    setUploadComplete(false);
+    setShowStudyGuide(false);
+    setCurrentPhase('upload');
   };
 
   if (showLaunchScreen) {
@@ -62,6 +82,15 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <Toaster position="top-right" />
+
+      {/* Success Animation Overlay */}
+      {showSuccessAnimation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="text-8xl animate-bounce">
+            ✨
+          </div>
+        </div>
+      )}
       
       {/* Header */}
       <div className="bg-black/20 backdrop-blur-sm border-b border-purple-500/20 p-4">
@@ -129,7 +158,7 @@ function AppContent() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-8">
         {/* Study Guide Generator */}
-        {showStudyGuide && (
+        {showStudyGuide && currentPhase === 'summary' && (
           <div className="mb-8">
             <StudyGuideGenerator
               documents={documents}
@@ -213,72 +242,28 @@ function AppContent() {
         )}
 
         {currentPhase === 'upload' && (
-          <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300 mb-8">
-              📁 Upload Documents
-            </h2>
+          <div className="max-w-4xl mx-auto">
+            <EnhancedUploadPhase
+              onDocumentsProcessed={handleDocumentsProcessed}
+              onGenerateStudyGuide={handleGenerateStudyGuide}
+            />
             
-            <div className="bg-gradient-to-br from-purple-800/30 to-pink-800/30 backdrop-blur-sm rounded-xl p-8 border border-purple-500/20 mb-8">
-              <div className="text-6xl mb-4">📄</div>
-              <p className="text-purple-200/80 text-lg mb-6">
-                Upload your study materials for AI analysis
-              </p>
-              
-              <div className="border-2 border-dashed border-purple-400/50 rounded-lg p-8 mb-6">
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      Array.from(e.target.files).forEach(handleDocumentUpload);
-                    }
-                  }}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="cursor-pointer block"
-                >
-                  <div className="text-4xl mb-4">📤</div>
-                  <p className="text-purple-300 mb-2">Click to upload files</p>
-                  <p className="text-purple-400/70 text-sm">
-                    Supports PDF, Word, images, and text files
-                  </p>
-                </label>
-              </div>
-              
-              {documents.length > 0 && (
-                <div className="text-left">
-                  <h3 className="text-lg font-semibold text-purple-200 mb-4">Uploaded Documents:</h3>
-                  <div className="space-y-2">
-                    {documents.map((doc) => (
-                      <div key={doc.id} className="bg-black/20 rounded-lg p-3 flex justify-between items-center">
-                        <span className="text-purple-300">{doc.name}</span>
-                        <span className="text-purple-400/70 text-sm">
-                          {(doc.size / 1024).toFixed(1)} KB
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-center gap-4">
+            {/* Navigation */}
+            <div className="flex justify-center gap-4 mt-8">
               <button
                 onClick={() => handlePhaseChange('library')}
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all duration-300 shadow-lg hover:shadow-blue-500/30"
               >
                 View Library
               </button>
-              <button
-                onClick={() => handlePhaseChange('summary')}
-                className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl hover:from-green-500 hover:to-emerald-500 transition-all duration-300 shadow-lg hover:shadow-green-500/30"
-              >
-                Generate Study Guide
-              </button>
+              {uploadComplete && (
+                <button
+                  onClick={resetUploadState}
+                  className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold rounded-xl hover:from-gray-500 hover:to-gray-600 transition-all duration-300"
+                >
+                  Upload More Files
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -306,11 +291,22 @@ function AppContent() {
                     <div key={doc.id} className="bg-black/20 rounded-lg p-4 text-left">
                       <h3 className="text-blue-200 font-semibold mb-2">{doc.name}</h3>
                       <p className="text-blue-300/70 text-sm mb-2">
-                        Type: {doc.type} • Size: {(doc.size / 1024).toFixed(1)} KB
+                        Type: {doc.type} • Size: {(doc.metadata.size / 1024).toFixed(1)} KB • Words: {doc.wordCount}
                       </p>
-                      <p className="text-blue-400/70 text-xs">
-                        Uploaded: {doc.uploadDate.toLocaleDateString()}
+                      <p className="text-blue-400/70 text-xs mb-3">
+                        Uploaded: {doc.metadata.uploadDate.toLocaleDateString()}
                       </p>
+                      <div className="text-blue-200/80 text-xs mb-3">
+                        <p className="line-clamp-3">{doc.extractedText.substring(0, 150)}...</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowStudyGuide(true);
+                        }}
+                        className="w-full px-3 py-2 bg-blue-600/50 hover:bg-blue-500/50 text-blue-200 text-sm rounded-lg transition-colors"
+                      >
+                        Generate Study Guide
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -380,7 +376,11 @@ function AppContent() {
 }
 
 function App() {
-  return <AppContent />;
+  return (
+    <OllamaProvider>
+      <AppContent />
+    </OllamaProvider>
+  );
 }
 
 export default App;

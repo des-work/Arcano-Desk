@@ -5,16 +5,19 @@
 
 import React, { useState } from 'react';
 import { BookOpen, Download, Share2, Settings, Eye, Edit3, Save, RefreshCw } from 'lucide-react';
+import { DocumentProcessor, ProcessedDocument } from '../utils/DocumentProcessor.ts';
+import { useOllama } from '../contexts/OllamaContext.tsx';
 
 export interface StudyGuideSettings {
   format: 'outline' | 'detailed' | 'summary' | 'flashcards';
+  style: 'academic' | 'casual' | 'creative' | 'technical' | 'minimal';
   highlightKeywords: boolean;
   boldHeadings: boolean;
   textSizeVariation: boolean;
   includeExamples: boolean;
   includeQuestions: boolean;
   annotationLevel: 'minimal' | 'moderate' | 'comprehensive';
-  colorScheme: 'default' | 'academic' | 'colorful' | 'minimal';
+  colorScheme: 'default' | 'academic' | 'colorful' | 'minimal' | 'magical' | 'dark' | 'neon';
 }
 
 export interface StudyGuideSection {
@@ -29,20 +32,21 @@ export interface StudyGuideSection {
 }
 
 export interface StudyGuideGeneratorProps {
-  documents: any[];
+  documents: ProcessedDocument[];
   onGenerate?: (studyGuide: StudyGuideSection[]) => void;
   className?: string;
 }
 
 const DEFAULT_SETTINGS: StudyGuideSettings = {
   format: 'detailed',
+  style: 'academic',
   highlightKeywords: true,
   boldHeadings: true,
   textSizeVariation: true,
   includeExamples: true,
   includeQuestions: true,
   annotationLevel: 'moderate',
-  colorScheme: 'academic',
+  colorScheme: 'magical',
 };
 
 export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
@@ -50,55 +54,112 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
   onGenerate,
   className = '',
 }) => {
+  const { generateSummary, generateStudyMaterial, suggestTopics, isLoading: aiLoading } = useOllama();
   const [settings, setSettings] = useState<StudyGuideSettings>(DEFAULT_SETTINGS);
   const [studyGuide, setStudyGuide] = useState<StudyGuideSection[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [previewMode, setPreviewMode] = useState<'edit' | 'preview'>('edit');
+  const [aiStatus, setAiStatus] = useState<'idle' | 'analyzing' | 'generating' | 'complete'>('idle');
 
-  // Generate study guide based on settings
+  // Generate study guide using real AI analysis
   const generateStudyGuide = async () => {
     try {
       setIsGenerating(true);
+      setAiStatus('analyzing');
       
-      // Simulate AI processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Process uploaded documents
+      if (documents.length === 0) {
+        console.warn('No documents available for study guide generation');
+        setIsGenerating(false);
+        setAiStatus('idle');
+        return;
+      }
+
+      // Combine all document content
+      const documentContent = documents.map(doc => doc.extractedText).join('\n\n');
+      const totalWords = documents.reduce((sum, doc) => sum + doc.wordCount, 0);
       
-      // Generate sample study guide based on settings
-      const generatedGuide: StudyGuideSection[] = [
-        {
-          id: 'intro',
-          title: 'Introduction to Machine Learning',
-          level: 1,
-          content: 'Machine Learning is a subset of artificial intelligence that focuses on algorithms and statistical models that enable computer systems to improve their performance on a specific task through experience.',
-          keywords: ['Machine Learning', 'AI', 'algorithms', 'statistical models', 'computer systems'],
-          examples: ['Email spam detection', 'Image recognition', 'Recommendation systems'],
-          questions: ['What is the difference between AI and Machine Learning?', 'How do algorithms learn from data?'],
-          annotations: ['Key concept that forms the foundation of modern AI systems']
-        },
-        {
-          id: 'types',
-          title: 'Types of Machine Learning',
+      setAiStatus('generating');
+      
+      // Generate AI-powered study guide sections
+      const generatedGuide: StudyGuideSection[] = [];
+      
+      // 1. Overview Section
+      const overviewPrompt = `Create a comprehensive overview of this study material. Style: ${settings.style}. Format: ${settings.format}.`;
+      const overviewContent = await generateSummary(documentContent, 'long', overviewPrompt);
+      
+      generatedGuide.push({
+        id: 'overview',
+        title: `🧙‍♂️ Study Guide Overview - ${documents.length} Document${documents.length > 1 ? 's' : ''}`,
+        level: 1,
+        content: overviewContent,
+        keywords: await extractKeywords(documentContent),
+        examples: await generateExamples(documentContent),
+        questions: await generateQuestions(documentContent),
+        annotations: [`Generated in ${settings.style} style`, `Based on ${totalWords} total words`, `AI-powered analysis`]
+      });
+
+      // 2. Key Concepts Section
+      const conceptsContent = await generateStudyMaterial(documentContent, 'notes');
+      
+      generatedGuide.push({
+        id: 'key-concepts',
+        title: '🔑 Key Concepts and Themes',
+        level: 2,
+        content: conceptsContent,
+        keywords: ['key concepts', 'themes', 'important ideas', 'main topics'],
+        examples: await generateExamples(documentContent),
+        questions: await generateQuestions(documentContent),
+        annotations: ['AI-extracted concepts from your documents']
+      });
+
+      // 3. Detailed Analysis Section
+      const analysisContent = await generateStudyMaterial(documentContent, 'notes');
+      
+      generatedGuide.push({
+        id: 'detailed-analysis',
+        title: '📚 Detailed Analysis',
+        level: 3,
+        content: analysisContent,
+        keywords: ['detailed analysis', 'systematic study', 'breakdown', 'comprehensive'],
+        examples: await generateExamples(documentContent),
+        questions: await generateQuestions(documentContent),
+        annotations: ['AI-powered detailed analysis of your content']
+      });
+
+      // 4. Study Questions Section
+      const questionsContent = await generateStudyMaterial(documentContent, 'questions');
+      
+      generatedGuide.push({
+        id: 'study-questions',
+        title: '❓ Study Questions & Practice',
+        level: 2,
+        content: questionsContent,
+        keywords: ['study questions', 'practice', 'review', 'assessment'],
+        examples: [],
+        questions: await generateQuestions(documentContent),
+        annotations: ['AI-generated study questions based on your content']
+      });
+
+      // 5. Flashcards Section (if requested)
+      if (settings.format === 'flashcards') {
+        const flashcardsContent = await generateStudyMaterial(documentContent, 'flashcards');
+        
+        generatedGuide.push({
+          id: 'flashcards',
+          title: '🃏 Study Flashcards',
           level: 2,
-          content: 'There are three main types of machine learning: supervised learning, unsupervised learning, and reinforcement learning.',
-          keywords: ['supervised learning', 'unsupervised learning', 'reinforcement learning'],
-          examples: ['Classification problems (supervised)', 'Clustering data (unsupervised)', 'Game playing (reinforcement)'],
-          questions: ['When would you use supervised vs unsupervised learning?', 'What are the advantages of reinforcement learning?'],
-          annotations: ['Understanding these types helps in choosing the right approach for different problems']
-        },
-        {
-          id: 'supervised',
-          title: 'Supervised Learning',
-          level: 3,
-          content: 'Supervised learning uses labeled training data to learn a mapping function from inputs to outputs. The algorithm learns from examples where the correct answer is provided.',
-          keywords: ['labeled training data', 'mapping function', 'inputs to outputs', 'correct answer'],
-          examples: ['Predicting house prices', 'Classifying emails as spam/not spam', 'Recognizing handwritten digits'],
-          questions: ['What makes training data "labeled"?', 'How does the algorithm know if its predictions are correct?'],
-          annotations: ['Most common type of ML, used when you have historical data with known outcomes']
-        }
-      ];
+          content: flashcardsContent,
+          keywords: ['flashcards', 'memorization', 'quick review', 'key terms'],
+          examples: [],
+          questions: [],
+          annotations: ['AI-generated flashcards for efficient studying']
+        });
+      }
       
       setStudyGuide(generatedGuide);
+      setAiStatus('complete');
       setIsGenerating(false);
       
       if (onGenerate) {
@@ -107,7 +168,46 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
     } catch (error) {
       console.error('Error generating study guide:', error);
       setIsGenerating(false);
-      // You could add a toast notification here to show the error to the user
+      setAiStatus('idle');
+    }
+  };
+
+  // Helper function to extract keywords using AI
+  const extractKeywords = async (content: string): Promise<string[]> => {
+    try {
+      const prompt = `Extract the 10 most important keywords from this content: ${content.substring(0, 1000)}`;
+      const response = await generateSummary(content, 'short', prompt);
+      return response.split(',').map(k => k.trim()).slice(0, 10);
+    } catch {
+      return content.split(/\s+/).slice(0, 10);
+    }
+  };
+
+  // Helper function to generate examples using AI
+  const generateExamples = async (content: string): Promise<string[]> => {
+    try {
+      const prompt = `Generate 3 practical examples based on this content: ${content.substring(0, 1000)}`;
+      const response = await generateSummary(content, 'medium', prompt);
+      return response.split('\n').filter(line => line.trim()).slice(0, 3);
+    } catch {
+      return ['Example 1: Based on your content', 'Example 2: Practical application', 'Example 3: Real-world usage'];
+    }
+  };
+
+  // Helper function to generate questions using AI
+  const generateQuestions = async (content: string): Promise<string[]> => {
+    try {
+      const prompt = `Generate 5 study questions based on this content: ${content.substring(0, 1000)}`;
+      const response = await generateSummary(content, 'medium', prompt);
+      return response.split('\n').filter(line => line.trim()).slice(0, 5);
+    } catch {
+      return [
+        'What are the main concepts in this material?',
+        'How do these concepts relate to each other?',
+        'What practical applications can you think of?',
+        'What questions do you still have?',
+        'How would you explain this to someone else?'
+      ];
     }
   };
 
@@ -153,6 +253,33 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
           example: 'bg-gray-50 text-gray-700 border-l-2 border-gray-300',
           question: 'bg-gray-50 text-gray-700 border-l-2 border-gray-300',
           annotation: 'bg-gray-50 text-gray-700 border-l-2 border-gray-300'
+        };
+      case 'magical':
+        return {
+          heading: 'text-purple-200 font-wizard',
+          content: 'text-purple-100',
+          keyword: 'bg-purple-500/30 text-purple-200 border border-purple-400/50',
+          example: 'bg-purple-800/20 text-purple-200 border-l-4 border-purple-400',
+          question: 'bg-cyan-800/20 text-cyan-200 border-l-4 border-cyan-400',
+          annotation: 'bg-pink-800/20 text-pink-200 border-l-4 border-pink-400'
+        };
+      case 'dark':
+        return {
+          heading: 'text-gray-100',
+          content: 'text-gray-300',
+          keyword: 'bg-gray-700 text-gray-100',
+          example: 'bg-gray-800 text-gray-200 border-l-4 border-gray-500',
+          question: 'bg-gray-800 text-gray-200 border-l-4 border-gray-500',
+          annotation: 'bg-gray-800 text-gray-200 border-l-4 border-gray-500'
+        };
+      case 'neon':
+        return {
+          heading: 'text-neon-purple font-wizard',
+          content: 'text-gray-200',
+          keyword: 'bg-neon-purple/20 text-neon-purple border border-neon-purple/50',
+          example: 'bg-neon-pink/20 text-neon-pink border-l-4 border-neon-pink',
+          question: 'bg-neon-cyan/20 text-neon-cyan border-l-4 border-neon-cyan',
+          annotation: 'bg-neon-green/20 text-neon-green border-l-4 border-neon-green'
         };
       default:
         return {
@@ -222,6 +349,22 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
                 </select>
               </div>
 
+              {/* Writing Style */}
+              <div>
+                <label className="block text-purple-300 text-sm font-medium mb-2">Writing Style</label>
+                <select
+                  value={settings.style}
+                  onChange={(e) => setSettings(prev => ({ ...prev, style: e.target.value as any }))}
+                  className="w-full bg-black/50 border border-purple-500/30 rounded-lg px-3 py-2 text-purple-200"
+                >
+                  <option value="academic">Academic</option>
+                  <option value="casual">Casual</option>
+                  <option value="creative">Creative</option>
+                  <option value="technical">Technical</option>
+                  <option value="minimal">Minimal</option>
+                </select>
+              </div>
+
               {/* Color Scheme */}
               <div>
                 <label className="block text-purple-300 text-sm font-medium mb-2">Color Scheme</label>
@@ -234,6 +377,9 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
                   <option value="academic">Academic</option>
                   <option value="colorful">Colorful</option>
                   <option value="minimal">Minimal</option>
+                  <option value="magical">Magical</option>
+                  <option value="dark">Dark</option>
+                  <option value="neon">Neon</option>
                 </select>
               </div>
 
@@ -311,22 +457,38 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
       <div className="flex justify-center">
         <button
           onClick={generateStudyGuide}
-          disabled={isGenerating}
+          disabled={isGenerating || aiLoading}
           className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-wizard rounded-xl hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isGenerating ? (
             <>
               <RefreshCw className="w-5 h-5 animate-spin" />
-              Generating Study Guide...
+              {aiStatus === 'analyzing' && '🧠 Analyzing Content...'}
+              {aiStatus === 'generating' && '⚡ AI Generating...'}
+              {aiStatus === 'complete' && '✨ Study Guide Complete!'}
             </>
           ) : (
             <>
               <BookOpen className="w-5 h-5" />
-              Generate Study Guide
+              🧙‍♂️ Generate AI Study Guide
             </>
           )}
         </button>
       </div>
+
+      {/* AI Status Indicator */}
+      {aiStatus !== 'idle' && (
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-800/30 rounded-lg border border-purple-500/30">
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+            <span className="text-purple-200 text-sm">
+              {aiStatus === 'analyzing' && 'AI is analyzing your documents...'}
+              {aiStatus === 'generating' && 'AI is generating your study guide...'}
+              {aiStatus === 'complete' && 'AI study guide generation complete!'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Study Guide Display */}
       {studyGuide.length > 0 && (
