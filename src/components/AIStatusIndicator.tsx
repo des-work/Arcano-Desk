@@ -1,187 +1,148 @@
-/**
- * AI Status Indicator
- * Real-time AI connection status and model information
- */
-
-import React, { useState, useEffect } from 'react';
-import { 
-  WifiOff, 
-  Loader, 
-  CheckCircle, 
-  AlertCircle, 
-  Cpu,
-  Zap,
-  RefreshCw
-} from 'lucide-react';
+import React, { useState } from 'react';
 import { useRobustOllama } from '../contexts/RobustOllamaContext.tsx';
 
-export interface AIStatusIndicatorProps {
-  className?: string;
+interface AIStatusIndicatorProps {
   showDetails?: boolean;
+  className?: string;
 }
 
-export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
-  className = '',
-  showDetails = true
+const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({ 
+  showDetails = false, 
+  className = '' 
 }) => {
   const { 
+    isConnected, 
     isLoading, 
-    models, 
-    currentModel, 
     connectionStatus, 
-    connect, 
-    testConnection 
+    currentModel, 
+    models, 
+    reconnect, 
+    getConnectionInfo 
   } = useRobustOllama();
-
-  const [isTesting, setIsTesting] = useState(false);
-  const [lastTested, setLastTested] = useState<Date | null>(null);
-
-  // Auto-test connection every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (!isLoading) {
-        await testConnection();
-        setLastTested(new Date());
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isLoading, testConnection]);
+  
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [showModelSelector, setShowModelSelector] = useState(false);
 
   const handleReconnect = async () => {
-    setIsTesting(true);
+    setIsReconnecting(true);
     try {
-      await connect();
-      setLastTested(new Date());
+      await reconnect();
+    } catch (error) {
+      console.error('Reconnection failed:', error);
     } finally {
-      setIsTesting(false);
-    }
-  };
-
-  const getStatusIcon = () => {
-    if (isLoading || isTesting) {
-      return <Loader className="w-4 h-4 animate-spin text-blue-400" />;
-    }
-    
-    switch (connectionStatus) {
-      case 'connected':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-400" />;
-      case 'connecting':
-        return <Loader className="w-4 h-4 animate-spin text-yellow-400" />;
-      default:
-        return <WifiOff className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-  const getStatusText = () => {
-    if (isLoading || isTesting) {
-      return 'Testing Connection...';
-    }
-    
-    switch (connectionStatus) {
-      case 'connected':
-        return `Connected (${currentModel?.name || 'No Model'})`;
-      case 'error':
-        return 'Connection Failed';
-      case 'connecting':
-        return 'Connecting...';
-      default:
-        return 'Disconnected';
+      setIsReconnecting(false);
     }
   };
 
   const getStatusColor = () => {
     switch (connectionStatus) {
-      case 'connected':
-        return 'text-green-400';
-      case 'error':
-        return 'text-red-400';
-      case 'connecting':
-        return 'text-yellow-400';
-      default:
-        return 'text-gray-400';
+      case 'connected': return 'text-green-400';
+      case 'connecting': return 'text-yellow-400';
+      case 'error': return 'text-red-400';
+      default: return 'text-gray-400';
     }
   };
 
+  const getStatusIcon = () => {
+    switch (connectionStatus) {
+      case 'connected': return '🤖';
+      case 'connecting': return '⏳';
+      case 'error': return '⚠️';
+      default: return '❌';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'AI Connected';
+      case 'connecting': return 'Connecting...';
+      case 'error': return 'AI Unavailable';
+      default: return 'AI Disconnected';
+    }
+  };
+
+  const connectionInfo = getConnectionInfo();
+
   return (
-    <div className={`space-y-3 ${className}`}>
-      {/* Main Status */}
-      <div className="flex items-center gap-3">
-        {getStatusIcon()}
+    <div className={`ai-status-indicator ${className}`}>
+      {/* Compact Status */}
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{getStatusIcon()}</span>
         <span className={`font-medium ${getStatusColor()}`}>
           {getStatusText()}
         </span>
-        {connectionStatus === 'error' && (
-          <button
-            onClick={handleReconnect}
-            disabled={isTesting}
-            className="p-1 text-purple-400 hover:text-purple-300 transition-colors disabled:opacity-50"
-            title="Reconnect"
-          >
-            <RefreshCw className={`w-4 h-4 ${isTesting ? 'animate-spin' : ''}`} />
-          </button>
+        {currentModel && (
+          <span className="text-xs text-gray-400">
+            ({currentModel.name})
+          </span>
         )}
       </div>
 
-      {/* Detailed Information */}
+      {/* Detailed Status */}
       {showDetails && (
-        <div className="space-y-2 text-sm">
-          {/* Model Information */}
-          {currentModel && (
-            <div className="flex items-center gap-2 text-purple-300/70">
-              <Cpu className="w-3 h-3" />
-              <span>{currentModel.name}</span>
-              <span className="text-purple-400/50">•</span>
-              <span>{currentModel.size}</span>
-            </div>
-          )}
-
-          {/* Available Models Count */}
-          {models.length > 0 && (
-            <div className="flex items-center gap-2 text-purple-300/70">
-              <Zap className="w-3 h-3" />
-              <span>{models.length} model{models.length > 1 ? 's' : ''} available</span>
-            </div>
-          )}
-
-          {/* Last Tested */}
-          {lastTested && (
-            <div className="text-purple-400/50 text-xs">
-              Last tested: {lastTested.toLocaleTimeString()}
-            </div>
-          )}
-
+        <div className="mt-3 space-y-3">
           {/* Connection Details */}
-          <div className="text-purple-400/50 text-xs">
-            Ollama API: localhost:11434
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <h4 className="text-sm font-semibold text-gray-300 mb-2">Connection Details</h4>
+            <div className="space-y-1 text-xs text-gray-400">
+              <div>Status: <span className={getStatusColor()}>{connectionInfo.status}</span></div>
+              <div>Model: <span className="text-gray-300">{connectionInfo.model}</span></div>
+              <div>Available Models: <span className="text-gray-300">{connectionInfo.modelsCount}</span></div>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Model Selection (if multiple models available) */}
-      {showDetails && models.length > 1 && (
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-purple-200">Available Models:</div>
-          <div className="space-y-1 max-h-32 overflow-y-auto">
-            {models.map((model) => (
-              <div
-                key={model.id}
-                className={`flex items-center justify-between p-2 rounded text-xs ${
-                  currentModel?.id === model.id
-                    ? 'bg-purple-600/30 border border-purple-400/50'
-                    : 'bg-black/20 border border-purple-400/20'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Cpu className="w-3 h-3" />
-                  <span className="text-purple-200">{model.name}</span>
-                </div>
-                <div className="text-purple-400/70">{model.size}</div>
+          {/* Available Models */}
+          {models.length > 0 && (
+            <div className="bg-gray-800/50 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-gray-300 mb-2">Available Models</h4>
+              <div className="space-y-1">
+                {models.map((model) => (
+                  <div 
+                    key={model.id} 
+                    className={`text-xs p-2 rounded ${
+                      model.name === currentModel?.name 
+                        ? 'bg-blue-600/30 text-blue-300' 
+                        : 'bg-gray-700/30 text-gray-400'
+                    }`}
+                  >
+                    <div className="font-medium">{model.name}</div>
+                    <div className="text-gray-500">{model.size}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleReconnect}
+              disabled={isReconnecting || isLoading}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white text-xs rounded transition-colors"
+            >
+              {isReconnecting ? 'Reconnecting...' : 'Reconnect'}
+            </button>
+            
+            <button
+              onClick={() => setShowModelSelector(!showModelSelector)}
+              className="px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white text-xs rounded transition-colors"
+            >
+              {showModelSelector ? 'Hide Models' : 'Show Models'}
+            </button>
           </div>
+
+          {/* Installation Guide */}
+          {!isConnected && (
+            <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-amber-300 mb-2">Setup AI</h4>
+              <div className="text-xs text-amber-200 space-y-1">
+                <p>1. Install Ollama from <a href="https://ollama.ai" target="_blank" rel="noopener noreferrer" className="text-amber-300 hover:text-amber-200 underline">ollama.ai</a></p>
+                <p>2. Download a model: <code className="bg-gray-700 px-1 rounded">ollama pull phi3:mini</code></p>
+                <p>3. Start Ollama: <code className="bg-gray-700 px-1 rounded">ollama serve</code></p>
+                <p>4. Click "Reconnect" above</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { BookOpen, Download, Printer, Share2, Edit3, Eye, EyeOff, MessageCircle, Send } from 'lucide-react';
-import { useOllama } from '../contexts/OllamaContext.tsx';
+import { useRobustOllama } from '../contexts/RobustOllamaContext.tsx';
 
 export interface StudyGuideSection {
   id: string;
@@ -31,7 +31,7 @@ export const StudyGuideDisplay: React.FC<StudyGuideDisplayProps> = ({
   onExport,
   className = '',
 }) => {
-  const { askQuestion, isLoading: aiLoading } = useOllama();
+  const { askQuestion, isLoading: aiLoading } = useRobustOllama();
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [showExamples, setShowExamples] = useState(true);
   const [showQuestions, setShowQuestions] = useState(true);

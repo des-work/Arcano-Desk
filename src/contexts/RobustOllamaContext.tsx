@@ -20,11 +20,13 @@ interface RobustOllamaContextType {
   currentModel: OllamaModel | null;
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
   generateSummary: (content: string, length: 'short' | 'medium' | 'long', format?: string) => Promise<string>;
-  generateStudyMaterial: (content: string, type: 'flashcards' | 'questions' | 'notes' | 'examples') => Promise<string>;
+  generateStudyMaterial: (content: string, type: 'flashcards' | 'questions' | 'notes' | 'examples' | 'annotations') => Promise<string>;
   askQuestion: (question: string, context: string) => Promise<string>;
   connect: () => Promise<boolean>;
+  reconnect: () => Promise<boolean>;
   setCurrentModel: (model: OllamaModel) => void;
   testConnection: () => Promise<boolean>;
+  getConnectionInfo: () => { status: string; model: string; modelsCount: number };
 }
 
 const RobustOllamaContext = createContext<RobustOllamaContextType | undefined>(undefined);
@@ -54,6 +56,45 @@ const FALLBACK_RESPONSES = {
   flashcards: "Q: What is the main topic of this material?\nA: The main topic covers [key concepts from your study materials].\n\nQ: What are the important details?\nA: The important details include [specific information from your content]."
 };
 
+// Enhanced fallback responses that are more specific and useful
+const ENHANCED_FALLBACK_RESPONSES = {
+  questions: [
+    "What are the main concepts discussed in this material?",
+    "How do these concepts relate to each other?",
+    "What practical applications can you identify?",
+    "What are the key takeaways from this content?",
+    "How would you explain this to someone else?"
+  ],
+  notes: [
+    "Review the main headings and subheadings for structure",
+    "Identify key terms and their definitions",
+    "Look for examples and case studies provided",
+    "Note any formulas, processes, or procedures mentioned",
+    "Highlight important dates, numbers, or statistics"
+  ],
+  examples: [
+    "Consider how this concept applies in different scenarios",
+    "Think about similar situations you may have encountered",
+    "Look for patterns that repeat throughout the material",
+    "Identify what makes each example unique or important",
+    "Connect these examples to your own experiences"
+  ],
+  annotations: [
+    "This section provides foundational knowledge for the topic",
+    "Pay attention to the examples given - they illustrate key concepts",
+    "The structure here follows a logical progression",
+    "These points are essential for understanding the broader context",
+    "Consider how this relates to real-world applications"
+  ],
+  summaries: [
+    "This material covers important concepts that build upon each other",
+    "Understanding the relationships between different topics is crucial",
+    "Practical applications help reinforce theoretical knowledge",
+    "Regular review and practice will improve retention",
+    "Connecting new information to existing knowledge enhances learning"
+  ]
+};
+
 export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,9 +102,34 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [currentModel, setCurrentModel] = useState<OllamaModel | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
 
-  // Auto-connect on mount
+  // Auto-connect on mount with retry logic
   useEffect(() => {
-    connect();
+    const attemptConnection = async () => {
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts && !isConnected) {
+        attempts++;
+        console.log(`AI connection attempt ${attempts}/${maxAttempts}`);
+        
+        const success = await connect();
+        if (success) {
+          console.log('AI connected successfully');
+          break;
+        }
+        
+        if (attempts < maxAttempts) {
+          console.log('Retrying AI connection in 2 seconds...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      
+      if (!isConnected) {
+        console.log('AI connection failed after all attempts. Using fallback mode.');
+      }
+    };
+    
+    attemptConnection();
   }, []);
 
   // Test connection to Ollama
@@ -149,6 +215,26 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [testConnection]);
 
+  // Manual reconnect function
+  const reconnect = useCallback(async (): Promise<boolean> => {
+    console.log('Manual AI reconnection requested');
+    setIsConnected(false);
+    setConnectionStatus('connecting');
+    setCurrentModel(null);
+    setModels([]);
+    
+    return await connect();
+  }, [connect]);
+
+  // Get connection information
+  const getConnectionInfo = useCallback(() => {
+    return {
+      status: connectionStatus,
+      model: currentModel?.name || 'None',
+      modelsCount: models.length
+    };
+  }, [connectionStatus, currentModel, models]);
+
   // Format bytes to human readable
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -158,11 +244,12 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  // Make AI call with robust error handling
+  // Make AI call with robust error handling and retry logic
   const makeAICall = useCallback(async (
     prompt: string, 
     maxTokens: number = 500,
-    useStreaming: boolean = false
+    useStreaming: boolean = false,
+    retryCount: number = 0
   ): Promise<string> => {
     if (!currentModel) {
       throw new Error('No model selected');
@@ -173,6 +260,7 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Check cache first
     const cached = responseCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log('Using cached AI response');
       return cached.response;
     }
 
@@ -236,32 +324,46 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
         }
 
-        const finalResult = result.trim() || 'AI response not available';
+        const finalResult = result.trim() || '';
         responseCache.set(cacheKey, { response: finalResult, timestamp: Date.now() });
         return finalResult;
       } else {
         // Handle non-streaming response
         const data = await response.json();
-        const result = data.response?.trim() || 'AI response not available';
+        const result = data.response?.trim() || '';
         responseCache.set(cacheKey, { response: result, timestamp: Date.now() });
         return result;
       }
 
     } catch (error) {
-      console.error('AI call failed:', error);
+      console.error(`AI call failed (attempt ${retryCount + 1}):`, error);
       
-      // Return fallback based on prompt type
+      // Retry logic for transient errors
+      if (retryCount < 2 && error instanceof Error && 
+          (error.message.includes('timeout') || error.message.includes('network'))) {
+        console.log(`Retrying AI call in ${(retryCount + 1) * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
+        return makeAICall(prompt, maxTokens, useStreaming, retryCount + 1);
+      }
+      
+      console.log('Using fallback response for prompt:', prompt.substring(0, 100));
+      
+      // Return enhanced fallback based on prompt type
       if (prompt.includes('summary') || prompt.includes('overview')) {
         const length = prompt.includes('short') ? 'short' : prompt.includes('long') ? 'long' : 'medium';
         return FALLBACK_RESPONSES.summary[length as keyof typeof FALLBACK_RESPONSES.summary];
       } else if (prompt.includes('questions')) {
-        return FALLBACK_RESPONSES.questions;
+        return ENHANCED_FALLBACK_RESPONSES.questions.join('\n');
       } else if (prompt.includes('examples')) {
-        return FALLBACK_RESPONSES.examples;
+        return ENHANCED_FALLBACK_RESPONSES.examples.join('\n');
       } else if (prompt.includes('flashcards')) {
         return FALLBACK_RESPONSES.flashcards;
+      } else if (prompt.includes('annotations')) {
+        return ENHANCED_FALLBACK_RESPONSES.annotations.join('\n');
+      } else if (prompt.includes('notes')) {
+        return ENHANCED_FALLBACK_RESPONSES.notes.join('\n');
       } else {
-        return FALLBACK_RESPONSES.notes;
+        return ENHANCED_FALLBACK_RESPONSES.notes.join('\n');
       }
     }
   }, [currentModel]);
@@ -275,7 +377,16 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const maxTokens = length === 'short' ? 200 : length === 'medium' ? 400 : 600;
     const contentPreview = content.substring(0, 3000); // Increased content limit
     
-    const prompt = `Create a ${length} ${format || 'summary'} of this study material. Be concise but comprehensive. Focus on key concepts and main points:\n\n${contentPreview}`;
+    const prompt = `You are an expert study guide creator. Create a ${length} ${format || 'summary'} of this study material. 
+
+Requirements:
+- Be concise but comprehensive
+- Focus on key concepts and main points
+- Highlight important relationships between concepts
+- Make it suitable for study and review
+- Use clear, academic language
+
+${contentPreview}`;
     
     return makeAICall(prompt, maxTokens, true); // Use streaming for better UX
   }, [makeAICall]);
@@ -283,7 +394,7 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Generate study material with specific types
   const generateStudyMaterial = useCallback(async (
     content: string, 
-    type: 'flashcards' | 'questions' | 'notes' | 'examples'
+    type: 'flashcards' | 'questions' | 'notes' | 'examples' | 'annotations'
   ): Promise<string> => {
     const contentPreview = content.substring(0, 2500); // Increased content limit
     let prompt = '';
@@ -293,13 +404,48 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
         prompt = `Create 5-7 flashcards for this study material. Format each as "Q: [Question] A: [Answer]". Focus on key concepts:\n\n${contentPreview}`;
         break;
       case 'questions':
-        prompt = `Generate 5-7 study questions for this material. Make them thought-provoking and focused on understanding:\n\n${contentPreview}`;
+        prompt = `You are an expert study guide creator. Generate 5-7 high-quality study questions for this academic material. Make them:
+- Thought-provoking and analytical
+- Focused on understanding key concepts
+- Suitable for exam preparation
+- Covering different levels of complexity
+
+Format each question on a new line, starting with a number (1., 2., etc.):
+
+${contentPreview}`;
         break;
       case 'notes':
-        prompt = `Create structured study notes with clear headings and key concepts:\n\n${contentPreview}`;
+        prompt = `You are an expert study guide creator. Create 5-7 structured study notes for this material. Each note should be:
+- Clear and actionable
+- Focused on key concepts and important information
+- Easy to understand and remember
+- Directly related to the content
+
+Format each note on a new line as a bullet point:
+
+${contentPreview}`;
         break;
       case 'examples':
-        prompt = `Provide 3-5 practical examples that illustrate the concepts in this material:\n\n${contentPreview}`;
+        prompt = `You are an expert study guide creator. Provide 3-5 practical examples that illustrate the concepts in this material. Each example should be:
+- Specific and relevant to the content
+- Easy to understand
+- Demonstrating real-world applications
+- Supporting the main concepts
+
+Format each example on a new line as a bullet point:
+
+${contentPreview}`;
+        break;
+      case 'annotations':
+        prompt = `You are an expert study guide creator. Create 5-7 helpful study annotations and insights for this material. Each annotation should be:
+- Focused on key points and connections
+- Providing learning tips and strategies
+- Highlighting important relationships
+- Offering study guidance
+
+Format each annotation on a new line as a bullet point:
+
+${contentPreview}`;
         break;
     }
     
@@ -324,8 +470,10 @@ export const RobustOllamaProvider: React.FC<{ children: React.ReactNode }> = ({ 
     generateStudyMaterial,
     askQuestion,
     connect,
+    reconnect,
     setCurrentModel,
     testConnection,
+    getConnectionInfo,
   };
 
   return (

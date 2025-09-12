@@ -7,6 +7,7 @@ import AIDocumentAnalyzer from './components/AIDocumentAnalyzer.tsx';
 import MarkedDocumentViewer from './components/MarkedDocumentViewer.tsx';
 import LibraryPhase from './components/LibraryPhase.tsx';
 import LaunchScreen from './components/LaunchScreen.tsx';
+import AIStatusIndicator from './components/AIStatusIndicator.tsx';
 // import { PerformanceMonitor } from './components/PerformanceMonitor.tsx';
 import { StudyGuideEnhancementOptions } from './utils/DocumentProcessor';
 // import { SimpleDocumentUpload } from './components/SimpleDocumentUpload';
@@ -90,7 +91,15 @@ const SimpleDocumentUpload: React.FC<SimpleDocumentUploadProps> = ({
 };
 
 function AppContent() {
-  const { isConnected, isLoading: aiLoading, generateSummary, generateStudyMaterial, askQuestion } = useRobustOllama();
+  const { 
+    isConnected, 
+    isLoading: aiLoading, 
+    generateSummary, 
+    generateStudyMaterial, 
+    askQuestion,
+    reconnect,
+    getConnectionInfo 
+  } = useRobustOllama();
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
   const [currentPhase, setCurrentPhase] = useState<'welcome' | 'upload' | 'library' | 'sample' | 'customize' | 'export' | 'generating'>('welcome');
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
@@ -154,7 +163,7 @@ function AppContent() {
     setDocuments(processedDocs);
     setEnhancementOptions(options);
     setShowEnhancedGenerator(true);
-    setCurrentPhase('generating');
+      setCurrentPhase('generating');
   };
 
   const handleEnhancedStudyGuideComplete = (studyGuide: any[]) => {
@@ -211,26 +220,201 @@ function AppContent() {
         `Document: ${doc.name}\n${doc.content}\n\nKey Terms Found: ${doc.keyTerms.join(', ')}\nExamples Found: ${doc.examples.slice(0, 3).join('; ')}\n\n`
       ).join('---\n\n');
 
-      // Single optimized AI call for all documents (much faster)
-      const [questionsResponse, studyNotesResponse, keyTakeawaysResponse] = await Promise.all([
-        generateStudyMaterial(combinedContent, 'questions'),
-        generateStudyMaterial(combinedContent, 'notes'),
-        generateSummary(combinedContent, 'long')
-      ]);
+      // Check AI connection status before making calls
+      console.log('AI Connection Status:', { isConnected, aiLoading });
+      
+      let questionsResponse = '';
+      let studyNotesResponse = '';
+      let keyTakeawaysResponse = '';
+      let annotationsResponse = '';
+      let examplesResponse = '';
 
-      const questions = questionsResponse.split('\n').filter(line => line.trim().length > 0).slice(0, 6);
-      const studyNotes = studyNotesResponse.split('\n').filter(line => line.trim().length > 0).slice(0, 6);
-      const keyTakeaways = keyTakeawaysResponse.split('\n').filter(line => line.trim().length > 0).slice(0, 6);
+      if (isConnected && !aiLoading) {
+        console.log('Making AI calls with connected AI...');
+        try {
+          // Enhanced AI analysis with comprehensive content generation
+          [questionsResponse, studyNotesResponse, keyTakeawaysResponse, annotationsResponse, examplesResponse] = await Promise.all([
+            generateStudyMaterial(combinedContent, 'questions'),
+            generateStudyMaterial(combinedContent, 'notes'),
+            generateSummary(combinedContent, 'long'),
+            generateStudyMaterial(combinedContent, 'annotations'),
+            generateStudyMaterial(combinedContent, 'examples')
+          ]);
+          console.log('AI calls completed successfully');
+        } catch (error) {
+          console.error('AI calls failed:', error);
+          // Continue with empty responses, will use fallbacks
+        }
+      } else {
+        console.log('AI not connected, using fallback content');
+        // Will use fallback content below
+      }
 
-      // Create analysis results for each document
+      // Process AI responses with better filtering and fallbacks
+      console.log('=== AI RESPONSE ANALYSIS ===');
+      console.log('Questions Response Length:', questionsResponse.length);
+      console.log('Study Notes Response Length:', studyNotesResponse.length);
+      console.log('Key Takeaways Response Length:', keyTakeawaysResponse.length);
+      console.log('Annotations Response Length:', annotationsResponse.length);
+      console.log('Examples Response Length:', examplesResponse.length);
+      
+      console.log('Raw AI Responses:', {
+        questionsResponse: questionsResponse.substring(0, 300),
+        studyNotesResponse: studyNotesResponse.substring(0, 300),
+        keyTakeawaysResponse: keyTakeawaysResponse.substring(0, 300),
+        annotationsResponse: annotationsResponse.substring(0, 300),
+        examplesResponse: examplesResponse.substring(0, 300)
+      });
+
+      // Improved response processing with better filtering
+      const processAIResponse = (response: string, type: string) => {
+        if (!response || response.trim().length === 0) {
+          console.log(`${type} response is empty`);
+          return [];
+        }
+        
+        const lines = response.split('\n')
+          .map(line => line.trim())
+          .filter(line => {
+            // Filter out empty lines and common AI response prefixes
+            if (line.length === 0) return false;
+            if (line.includes('AI response not available')) return false;
+            if (line.includes('I apologize')) return false;
+            if (line.includes('I cannot')) return false;
+            if (line.startsWith('Here are')) return false;
+            if (line.startsWith('Based on')) return false;
+            return true;
+          })
+          .slice(0, 10);
+        
+        console.log(`${type} processed lines:`, lines.length, lines.slice(0, 3));
+        return lines;
+      };
+
+      const questions = processAIResponse(questionsResponse, 'Questions');
+      const studyNotes = processAIResponse(studyNotesResponse, 'Study Notes');
+      const keyTakeaways = processAIResponse(keyTakeawaysResponse, 'Key Takeaways');
+      const annotations = processAIResponse(annotationsResponse, 'Annotations');
+      const aiExamples = processAIResponse(examplesResponse, 'Examples');
+
+      console.log('Processed Content:', {
+        questions: questions.length,
+        studyNotes: studyNotes.length,
+        keyTakeaways: keyTakeaways.length,
+        annotations: annotations.length,
+        aiExamples: aiExamples.length
+      });
+
+      // Enhanced fallback content based on document content
+      const generateFallbackContent = (docs: any[], type: string) => {
+        const docNames = docs.map(d => d.name).join(', ');
+        const docCount = docs.length;
+        
+        switch (type) {
+          case 'questions':
+            return [
+              `What are the main topics covered in ${docNames}?`,
+              `How do the concepts in these ${docCount} document${docCount > 1 ? 's' : ''} relate to each other?`,
+              `What are the key definitions or terms explained in ${docNames}?`,
+              `What practical examples or applications are mentioned?`,
+              `What are the most important points to remember from ${docNames}?`,
+              `How would you summarize the main ideas in your own words?`,
+              `What questions do you still have after reading ${docNames}?`
+            ];
+          case 'studyNotes':
+            return [
+              `Focus on the main headings and subheadings in ${docNames}`,
+              `Identify and define all key terms mentioned`,
+              `Look for numbered lists, bullet points, and examples`,
+              `Note any formulas, processes, or step-by-step procedures`,
+              `Highlight important dates, numbers, or statistics`,
+              `Pay attention to bold, italic, or underlined text`,
+              `Look for "for example" or "such as" statements`
+            ];
+          case 'keyTakeaways':
+            return [
+              `${docNames} contains important information that builds understanding`,
+              `The concepts presented are interconnected and support each other`,
+              `Practical examples help illustrate theoretical concepts`,
+              `Regular review of this material will improve retention`,
+              `Connecting this information to prior knowledge enhances learning`,
+              `The structure follows a logical progression of ideas`,
+              `Key points are essential for understanding the broader context`
+            ];
+          case 'annotations':
+            return [
+              `This section provides foundational knowledge for the topic`,
+              `Pay attention to examples - they illustrate key concepts clearly`,
+              `The structure follows a logical progression of ideas`,
+              `These points are essential for understanding the broader context`,
+              `Consider how this relates to real-world applications`,
+              `Look for patterns that repeat throughout the material`,
+              `Note the relationships between different concepts`
+            ];
+          case 'examples':
+            return [
+              `Look for sentences that start with "For example" or "Such as"`,
+              `Find numbered lists that provide specific instances`,
+              `Identify bullet points that give concrete examples`,
+              `Look for case studies or real-world applications mentioned`,
+              `Find analogies or comparisons used to explain concepts`,
+              `Look for step-by-step procedures or processes`,
+              `Identify specific data, numbers, or statistics provided`
+            ];
+          default:
+            return [];
+        }
+      };
+
+      const fallbackQuestions = generateFallbackContent(docs, 'questions');
+      const fallbackStudyNotes = generateFallbackContent(docs, 'studyNotes');
+      const fallbackKeyTakeaways = generateFallbackContent(docs, 'keyTakeaways');
+      const fallbackAnnotations = generateFallbackContent(docs, 'annotations');
+      const fallbackExamples = generateFallbackContent(docs, 'examples');
+
+      // Use fallbacks if AI responses are insufficient
+      const finalQuestions = questions.length > 0 ? questions : fallbackQuestions.slice(0, 5);
+      const finalStudyNotes = studyNotes.length > 0 ? studyNotes : fallbackStudyNotes.slice(0, 5);
+      const finalKeyTakeaways = keyTakeaways.length > 0 ? keyTakeaways : fallbackKeyTakeaways.slice(0, 5);
+      const finalAnnotations = annotations.length > 0 ? annotations : fallbackAnnotations.slice(0, 5);
+      const finalAiExamples = aiExamples.length > 0 ? aiExamples : fallbackExamples.slice(0, 5);
+
+      // Create analysis results for each document with comprehensive content
       preprocessedDocs.forEach((doc, index) => {
-        analysisResults.push({
+        const docQuestions = finalQuestions.slice(index * 2, (index + 1) * 2);
+        const docStudyNotes = finalStudyNotes.slice(index * 2, (index + 1) * 2);
+        const docKeyTakeaways = finalKeyTakeaways.slice(index * 2, (index + 1) * 2);
+        const docAnnotations = finalAnnotations.slice(index * 2, (index + 1) * 2);
+        const docAiExamples = finalAiExamples.slice(index * 2, (index + 1) * 2);
+        
+        // Combine extracted examples with AI-generated examples
+        const combinedExamples = [...doc.examples, ...docAiExamples].slice(0, 8);
+        
+        // Ensure we have content for each category
+        const finalDocQuestions = docQuestions.length > 0 ? docQuestions : finalQuestions.slice(0, 2);
+        const finalDocStudyNotes = docStudyNotes.length > 0 ? docStudyNotes : finalStudyNotes.slice(0, 2);
+        const finalDocKeyTakeaways = docKeyTakeaways.length > 0 ? docKeyTakeaways : finalKeyTakeaways.slice(0, 2);
+        const finalDocAnnotations = docAnnotations.length > 0 ? docAnnotations : finalAnnotations.slice(0, 2);
+        
+        const analysisResult = {
           keyTerms: doc.keyTerms,
-          examples: doc.examples,
-          questions: questions.slice(index * 2, (index + 1) * 2), // Distribute questions
-          studyNotes: studyNotes.slice(index * 2, (index + 1) * 2), // Distribute study notes
-          keyTakeaways: keyTakeaways.slice(index * 2, (index + 1) * 2) // Distribute takeaways
+          examples: combinedExamples,
+          questions: finalDocQuestions,
+          studyNotes: finalDocStudyNotes,
+          keyTakeaways: finalDocKeyTakeaways,
+          annotations: finalDocAnnotations
+        };
+        
+        console.log(`Analysis Result for Document ${index + 1}:`, {
+          keyTerms: analysisResult.keyTerms.length,
+          examples: analysisResult.examples.length,
+          questions: analysisResult.questions.length,
+          studyNotes: analysisResult.studyNotes.length,
+          keyTakeaways: analysisResult.keyTakeaways.length,
+          annotations: analysisResult.annotations.length
         });
+        
+        analysisResults.push(analysisResult);
       });
       
       // Combine all analysis results
@@ -240,6 +424,7 @@ function AppContent() {
         questions: [...new Set(analysisResults.flatMap(r => r.questions))],
         studyNotes: [...new Set(analysisResults.flatMap(r => r.studyNotes))],
         keyTakeaways: [...new Set(analysisResults.flatMap(r => r.keyTakeaways))],
+        annotations: [...new Set(analysisResults.flatMap(r => r.annotations))],
         markedDocument: docs.map(doc => doc.content).join('\n\n---\n\n')
       };
       
@@ -248,17 +433,18 @@ function AppContent() {
       // Generate study guide sections based on AI analysis
       const studyGuideSections: any[] = [];
 
-      // Create a section for each document
+      // Create a section for each document with comprehensive content
       docs.forEach((doc, index) => {
         const section = {
           id: `doc-${index + 1}`,
           title: `${doc.name} - AI Analyzed Content`,
-          content: doc.content.substring(0, 500) + (doc.content.length > 500 ? '...' : ''),
+          content: doc.content.substring(0, 800) + (doc.content.length > 800 ? '...' : ''),
           keywords: analysisResults[index]?.keyTerms || [],
           examples: analysisResults[index]?.examples || [],
           questions: analysisResults[index]?.questions || [],
-          annotations: analysisResults[index]?.studyNotes || [],
-          summaries: analysisResults[index]?.keyTakeaways || []
+          annotations: analysisResults[index]?.annotations || [],
+          summaries: analysisResults[index]?.keyTakeaways || [],
+          studyNotes: analysisResults[index]?.studyNotes || []
         };
         studyGuideSections.push(section);
       });
@@ -277,11 +463,35 @@ function AppContent() {
             'Which concepts appear most frequently across documents?',
             'What are the main ideas that connect all documents?'
           ],
-          annotations: combinedAnalysis.studyNotes.slice(0, 6),
-          summaries: combinedAnalysis.keyTakeaways.slice(0, 6)
+          annotations: combinedAnalysis.annotations.slice(0, 8),
+          summaries: combinedAnalysis.keyTakeaways.slice(0, 8),
+          studyNotes: combinedAnalysis.studyNotes.slice(0, 8)
         };
         studyGuideSections.unshift(overviewSection);
       }
+
+      console.log('=== FINAL STUDY GUIDE ANALYSIS ===');
+      console.log('Total sections created:', studyGuideSections.length);
+      console.log('AI Connection Status:', { isConnected, aiLoading });
+      console.log('Content Sources:', {
+        usingAI: isConnected && !aiLoading,
+        usingFallbacks: !isConnected || aiLoading,
+        questionsSource: questions.length > 0 ? 'AI' : 'Fallback',
+        studyNotesSource: studyNotes.length > 0 ? 'AI' : 'Fallback',
+        keyTakeawaysSource: keyTakeaways.length > 0 ? 'AI' : 'Fallback',
+        annotationsSource: annotations.length > 0 ? 'AI' : 'Fallback',
+        examplesSource: aiExamples.length > 0 ? 'AI' : 'Fallback'
+      });
+      
+      console.log('Final Study Guide Sections:', studyGuideSections.map(section => ({
+        title: section.title,
+        keywords: section.keywords?.length || 0,
+        examples: section.examples?.length || 0,
+        questions: section.questions?.length || 0,
+        studyNotes: section.studyNotes?.length || 0,
+        annotations: section.annotations?.length || 0,
+        summaries: section.summaries?.length || 0
+      })));
 
       setSampleStudyGuide(studyGuideSections);
       setIsAnalyzing(false);
@@ -754,6 +964,63 @@ function AppContent() {
     }
   };
 
+  // Export functionality
+  const handleExportToPDF = () => {
+    const content = customizedStudyGuide.map(section => 
+      `${section.title}\n\n${section.content}\n\nKey Terms: ${section.keywords?.join(', ') || 'None'}\n\nExamples:\n${section.examples?.map(ex => `• ${ex}`).join('\n') || 'None'}\n\nQuestions:\n${section.questions?.map((q, i) => `${i + 1}. ${q}`).join('\n') || 'None'}\n\nAnnotations:\n${section.annotations?.map(ann => `• ${ann}`).join('\n') || 'None'}\n\n${'='.repeat(50)}\n\n`
+    ).join('');
+    
+    const element = document.createElement('a');
+    const file = new Blob([content], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = 'study-guide.txt';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleExportToWord = () => {
+    const content = customizedStudyGuide.map(section => 
+      `${section.title}\n\n${section.content}\n\nKey Terms: ${section.keywords?.join(', ') || 'None'}\n\nExamples:\n${section.examples?.map(ex => `• ${ex}`).join('\n') || 'None'}\n\nQuestions:\n${section.questions?.map((q, i) => `${i + 1}. ${q}`).join('\n') || 'None'}\n\nAnnotations:\n${section.annotations?.map(ann => `• ${ann}`).join('\n') || 'None'}\n\n${'='.repeat(50)}\n\n`
+    ).join('');
+    
+    const element = document.createElement('a');
+    const file = new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    element.href = URL.createObjectURL(file);
+    element.download = 'study-guide.docx';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handlePrintPreview = () => {
+    const printContent = customizedStudyGuide.map(section => 
+      `${section.title}\n\n${section.content}\n\nKey Terms: ${section.keywords?.join(', ') || 'None'}\n\nExamples:\n${section.examples?.map(ex => `• ${ex}`).join('\n') || 'None'}\n\nQuestions:\n${section.questions?.map((q, i) => `${i + 1}. ${q}`).join('\n') || 'None'}\n\nAnnotations:\n${section.annotations?.map(ann => `• ${ann}`).join('\n') || 'None'}\n\n${'='.repeat(50)}\n\n`
+    ).join('');
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Study Guide - Print Preview</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+              h1, h2, h3 { color: #333; }
+              .section { margin-bottom: 30px; page-break-inside: avoid; }
+            </style>
+          </head>
+          <body>
+            <h1>AI-Generated Study Guide</h1>
+            <pre style="white-space: pre-wrap;">${printContent}</pre>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   if (showDemo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
@@ -793,12 +1060,12 @@ function AppContent() {
           </div>
 
           <div className="space-y-4">
-            <button
+          <button
               onClick={() => setShowDemo(false)}
-              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/30"
-            >
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/30"
+          >
               🚀 Back to Main App
-            </button>
+          </button>
             
             <div className="text-purple-300/70 text-sm">
               <p>✅ Real PDF processing with PDF.js</p>
@@ -828,18 +1095,9 @@ function AppContent() {
             </h1>
           </div>
           
-          {/* AI Status */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-cyan-500/30">
-            <div className={`w-2 h-2 rounded-full ${
-              aiStatus === 'connected' ? 'bg-green-400 animate-pulse' :
-              aiStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' :
-              'bg-red-400'
-            }`}></div>
-            <span className="text-xs text-cyan-300">
-              {aiStatus === 'connected' ? 'AI Ready' :
-               aiStatus === 'connecting' ? 'Connecting...' :
-               'AI Offline'}
-            </span>
+          {/* AI Status Indicator */}
+          <div className="flex items-center gap-4">
+            <AIStatusIndicator showDetails={false} />
           </div>
         </div>
       </div>
@@ -926,9 +1184,9 @@ function AppContent() {
                        <p>• Generating optimized study content with AI</p>
                        <p>• Caching results for instant future access</p>
                      </div>
-                   </div>
-                 )}
-                
+          </div>
+        )}
+
                 {analysisError && (
                   <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-4 mt-4">
                     <p className="text-red-200 text-sm">{analysisError}</p>
@@ -941,9 +1199,9 @@ function AppContent() {
                     >
                       Try Again
                     </button>
-                  </div>
-                )}
-                
+          </div>
+        )}
+
                 <div className="flex justify-center mt-6">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
                 </div>
@@ -1011,17 +1269,96 @@ function AppContent() {
             <div className="mb-8">
               <div className="text-center mb-8">
                 <div className="text-6xl mb-4">🔍</div>
-                <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300 mb-4">
+              <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300 mb-4">
                   Sample Study Guide
-                </h2>
+              </h2>
                 <p className="text-purple-200 text-lg mb-6">
                   Review the AI-generated sample below. You can approve it to proceed to customization, or go back to make changes.
                 </p>
+                
+                {/* AI Connection Status */}
+                <div className="mb-6">
+                  <AIStatusIndicator showDetails={true} className="w-full" />
+                  
+                  {/* Content Generation Status */}
+                  <div className="mt-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-4">
+                    <h4 className="text-lg font-semibold text-blue-300 mb-3 flex items-center">
+                      <span className="text-xl mr-2">🤖</span>
+                      Content Generation Status
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
+                          sampleStudyGuide.some(s => s.questions?.length > 0) ? 'bg-green-400' : 'bg-yellow-400'
+                        }`}></div>
+                        <div className="text-blue-200">Questions</div>
+                        <div className="text-blue-300/60 text-xs">
+                          {sampleStudyGuide.reduce((acc, s) => acc + (s.questions?.length || 0), 0)} total
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
+                          sampleStudyGuide.some(s => s.studyNotes?.length > 0) ? 'bg-green-400' : 'bg-yellow-400'
+                        }`}></div>
+                        <div className="text-blue-200">Study Notes</div>
+                        <div className="text-blue-300/60 text-xs">
+                          {sampleStudyGuide.reduce((acc, s) => acc + (s.studyNotes?.length || 0), 0)} total
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
+                          sampleStudyGuide.some(s => s.summaries?.length > 0) ? 'bg-green-400' : 'bg-yellow-400'
+                        }`}></div>
+                        <div className="text-blue-200">Key Takeaways</div>
+                        <div className="text-blue-300/60 text-xs">
+                          {sampleStudyGuide.reduce((acc, s) => acc + (s.summaries?.length || 0), 0)} total
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
+                          sampleStudyGuide.some(s => s.annotations?.length > 0) ? 'bg-green-400' : 'bg-yellow-400'
+                        }`}></div>
+                        <div className="text-blue-200">Annotations</div>
+                        <div className="text-blue-300/60 text-xs">
+                          {sampleStudyGuide.reduce((acc, s) => acc + (s.annotations?.length || 0), 0)} total
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
+                          sampleStudyGuide.some(s => s.examples?.length > 0) ? 'bg-green-400' : 'bg-yellow-400'
+                        }`}></div>
+                        <div className="text-blue-200">Examples</div>
+                        <div className="text-blue-300/60 text-xs">
+                          {sampleStudyGuide.reduce((acc, s) => acc + (s.examples?.length || 0), 0)} total
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-blue-300/80">
+                      {isConnected ? 
+                        '✅ AI-powered content generation active' : 
+                        '⚠️ Using fallback content - connect AI for enhanced generation'
+                      }
+                    </div>
+                  </div>
+                </div>
                 <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-4 mb-6">
                   <p className="text-blue-200 text-sm">
                     💡 <strong>Tip:</strong> This is a preview of how your study guide will look. You can customize the content, add focus areas, and adjust the detail level in the next step.
-                  </p>
-                </div>
+              </p>
+            </div>
+            
+                {/* Teacher Annotations Button */}
+                {aiAnalysis?.markedDocument && (
+                  <div className="flex justify-center mb-6">
+                    <button
+                      onClick={() => setShowMarkedDocument(true)}
+                      className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-lg hover:from-amber-500 hover:to-orange-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/30 flex items-center gap-2"
+                    >
+                      <span className="text-xl">👨‍🏫</span>
+                      View Teacher Annotations
+                    </button>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-6">
@@ -1051,8 +1388,8 @@ function AppContent() {
                         </div>
                         <p className="text-purple-300/60 text-xs mt-2">
                           Found {section.keywords.length} key terms from document structure and formatting
-                        </p>
-                      </div>
+                </p>
+              </div>
                     )}
                     
                     {section.examples && section.examples.length > 0 && (
@@ -1070,8 +1407,8 @@ function AppContent() {
                         </ul>
                         <p className="text-purple-300/60 text-xs mt-2">
                           Found {section.examples.length} examples from "for example", numbered lists, and bullet points
-                        </p>
-                      </div>
+                </p>
+              </div>
                     )}
                     
                     {section.questions && section.questions.length > 0 && (
@@ -1089,8 +1426,8 @@ function AppContent() {
                         </ul>
                         <p className="text-purple-300/60 text-xs mt-2">
                           Generated from definitions, formulas, processes, and main concepts
-                        </p>
-                      </div>
+                </p>
+              </div>
                     )}
                     
                     {section.annotations && section.annotations.length > 0 && (
@@ -1109,9 +1446,28 @@ function AppContent() {
                         <p className="text-purple-300/60 text-xs mt-2">
                           AI-generated study notes based on your document content
                         </p>
-                      </div>
+            </div>
                     )}
                     
+                    {section.studyNotes && section.studyNotes.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-lg font-semibold text-purple-300 mb-3 flex items-center">
+                          <span className="text-xl mr-2">📖</span>
+                          Study Notes (quick, digestible facts)
+                        </h4>
+                        <ul className="list-disc list-inside text-purple-300/80 space-y-2">
+                          {section.studyNotes.map((note: string, nIdx: number) => (
+                            <li key={nIdx} className="bg-cyan-900/20 p-3 rounded-lg border-l-4 border-cyan-500/50">
+                              {note}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-purple-300/60 text-xs mt-2">
+                          Quick, easily digestible facts from your document
+                        </p>
+          </div>
+        )}
+
                     {section.summaries && section.summaries.length > 0 && (
                       <div className="mb-6">
                         <h4 className="text-lg font-semibold text-purple-300 mb-3 flex items-center">
@@ -1225,7 +1581,7 @@ function AppContent() {
                       />
                       <span className="text-purple-200">Include Key Takeaways</span>
                     </label>
-                  </div>
+                </div>
                   
                   <div className="mt-6">
                     <label className="block text-purple-200 font-semibold mb-3">Detail Level</label>
@@ -1264,7 +1620,7 @@ function AppContent() {
                         {customizationOptions.detailLevel === 'comprehensive' && 'Balanced coverage with examples and context'}
                         {customizationOptions.detailLevel === 'detailed' && 'In-depth analysis with extensive examples and explanations'}
                       </p>
-                    </div>
+                      </div>
                   </div>
                 </div>
               </div>
@@ -1278,8 +1634,8 @@ function AppContent() {
               >
                 ← Back to Sample
               </button>
-              <button
-                onClick={() => {
+                      <button
+                        onClick={() => {
                   // Apply customization and generate final study guide
                   const customized = sampleStudyGuide.map(section => ({
                     ...section,
@@ -1294,8 +1650,8 @@ function AppContent() {
                 className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/30"
               >
                 ✨ Generate Final Guide
-              </button>
-            </div>
+                      </button>
+                    </div>
           </div>
         )}
 
@@ -1319,7 +1675,10 @@ function AppContent() {
                   <div className="text-4xl mb-4">📄</div>
                   <h3 className="text-xl font-semibold text-green-200 mb-2">PDF Export</h3>
                   <p className="text-green-300/70 text-sm mb-4">Download as a formatted PDF document</p>
-                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors">
+                  <button 
+                    onClick={handleExportToPDF}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
+                  >
                     Download PDF
                   </button>
                 </div>
@@ -1328,7 +1687,10 @@ function AppContent() {
                   <div className="text-4xl mb-4">📝</div>
                   <h3 className="text-xl font-semibold text-blue-200 mb-2">Word Document</h3>
                   <p className="text-blue-300/70 text-sm mb-4">Export as an editable Word document</p>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors">
+                  <button 
+                    onClick={handleExportToWord}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+                  >
                     Download DOCX
                   </button>
                 </div>
@@ -1337,7 +1699,10 @@ function AppContent() {
                   <div className="text-4xl mb-4">📋</div>
                   <h3 className="text-xl font-semibold text-purple-200 mb-2">Print View</h3>
                   <p className="text-purple-300/70 text-sm mb-4">View formatted for printing</p>
-                  <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors">
+                  <button 
+                    onClick={handlePrintPreview}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                  >
                     Print Preview
                   </button>
                 </div>
@@ -1369,8 +1734,8 @@ function AppContent() {
                             </span>
                           ))}
                         </div>
-                      </div>
-                    )}
+                </div>
+              )}
                     
                     {customizationOptions.includeExamples && section.examples && section.examples.length > 0 && (
                       <div className="mb-6">
@@ -1383,7 +1748,7 @@ function AppContent() {
                             <li key={exIdx}>{example}</li>
                           ))}
                         </ul>
-                      </div>
+            </div>
                     )}
                     
                     {customizationOptions.includeQuestions && section.questions && section.questions.length > 0 && (
@@ -1473,8 +1838,8 @@ function AppContent() {
                             {keyword}
                           </span>
                         ))}
-                      </div>
-                    </div>
+                </div>
+                </div>
                   )}
                   
                   {section.examples && section.examples.length > 0 && (
@@ -1485,7 +1850,7 @@ function AppContent() {
                           <li key={exIdx}>{example}</li>
                         ))}
                       </ul>
-                    </div>
+              </div>
                   )}
                   
                   {section.questions && section.questions.length > 0 && (

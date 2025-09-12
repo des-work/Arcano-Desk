@@ -7,9 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
   FileText, 
-  Plus, 
   Search, 
-  Filter, 
   Grid, 
   List,
   Eye,
@@ -27,11 +25,9 @@ interface LibraryPhaseProps {
 export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete, documents, onDeleteDocument }) => {
   // const { triggerAnimation } = useAnimations();
   
-  const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [showCreateCourse, setShowCreateCourse] = useState(false);
 
   // Initialize component
   useEffect(() => {
@@ -106,13 +102,6 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete, document
               {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
             </button>
             
-            <button
-              onClick={() => setShowCreateCourse(true)}
-              className="px-3 py-2 bg-purple-600/50 text-purple-200 rounded-lg hover:bg-purple-500/50 transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Course
-            </button>
           </div>
         </div>
 
@@ -165,10 +154,10 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete, document
                   onClick={() => handleFileSelect(file.id)}
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="w-8 h-8 text-purple-400" />
-                      <div>
-                        <h3 className="font-wizard text-white text-lg">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <FileText className="w-8 h-8 text-purple-400 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-wizard text-white text-lg truncate" title={file.name}>
                           {file.name}
                         </h3>
                         <p className="text-purple-200/60 font-arcane text-sm">
@@ -209,8 +198,8 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete, document
                   </div>
                   
                   <div className="flex items-center justify-between text-sm text-purple-200/60">
-                    <span>{file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}</span>
-                    <span>{file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : 'Unknown date'}</span>
+                    <span>{file.metadata?.size ? `${(file.metadata.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}</span>
+                    <span>{file.metadata?.uploadDate ? new Date(file.metadata.uploadDate).toLocaleDateString() : new Date().toLocaleDateString()}</span>
                   </div>
                   
                   {selectedFiles.includes(file.id) && (

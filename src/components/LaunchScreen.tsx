@@ -15,10 +15,10 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
   useEffect(() => {
     const sequence = [
       { phase: 'loading', delay: 0 },
-      { phase: 'book', delay: 2000 },
-      { action: 'openBook', delay: 4000 },
-      { phase: 'title', delay: 6000 },
-      { phase: 'wizard', delay: 9000 }
+      { phase: 'book', delay: 1500 },
+      { action: 'openBook', delay: 3500 },
+      { phase: 'title', delay: 5500 },
+      { phase: 'wizard', delay: 7500 }
     ];
 
     sequence.forEach(({ phase, action, delay }) => {
@@ -61,16 +61,16 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
   }, [phase, wizardMessages]);
 
   // Title animation spring
-  const titleSpring = useSpring(0, { stiffness: 300, damping: 30 });
+  const titleSpring = useSpring(0, { stiffness: 200, damping: 40, mass: 0.8 });
   const titleOpacity = useTransform(titleSpring, [0, 1], [0, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0]);
-  const titleY = useTransform(titleSpring, [0, 1], [100, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 0 : 100]);
-  const titleScale = useTransform(titleSpring, [0, 1], [0.5, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0.5]);
+  const titleY = useTransform(titleSpring, [0, 1], [50, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 0 : 50]);
+  const titleScale = useTransform(titleSpring, [0, 1], [0.8, phase === 'title' || phase === 'wizard' || phase === 'complete' ? 1 : 0.8]);
 
   // Wizard animation spring
-  const wizardSpring = useSpring(0, { stiffness: 200, damping: 25 });
+  const wizardSpring = useSpring(0, { stiffness: 150, damping: 35, mass: 0.6 });
   const wizardOpacity = useTransform(wizardSpring, [0, 1], [0, phase === 'wizard' || phase === 'complete' ? 1 : 0]);
-  const wizardScale = useTransform(wizardSpring, [0, 1], [0, phase === 'wizard' || phase === 'complete' ? 1 : 0]);
-  const wizardRotate = useTransform(wizardSpring, [0, 1], [-180, phase === 'wizard' || phase === 'complete' ? 0 : -180]);
+  const wizardScale = useTransform(wizardSpring, [0, 1], [0.8, phase === 'wizard' || phase === 'complete' ? 1 : 0.8]);
+  const wizardRotate = useTransform(wizardSpring, [0, 1], [-90, phase === 'wizard' || phase === 'complete' ? 0 : -90]);
 
   // Update springs based on phase changes
   useEffect(() => {
@@ -276,32 +276,40 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
       <AnimatePresence>
         {bookOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ 
+              duration: 1.5, 
+              ease: [0.25, 0.46, 0.45, 0.94],
+              delay: 0.2
+            }}
             className="relative z-20 mb-6"
           >
             <div className="relative">
               {/* Enhanced Book Glow */}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-purple-500/50 to-blue-500/50 blur-3xl"
+                initial={{ opacity: 0, scale: 0.8 }}
                 animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.6, 1, 0.6]
+                  opacity: [0.6, 1, 0.6],
+                  scale: [1, 1.2, 1]
                 }}
                 transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
+                  opacity: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+                  scale: { duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }
                 }}
               />
               
               {/* Opening Book with Pages */}
               <motion.div 
                 className="relative w-72 h-48"
-                initial={{ rotateY: 0 }}
-                animate={{ rotateY: -15 }}
-                transition={{ duration: 2, ease: "easeOut" }}
+                initial={{ rotateY: 0, scale: 0.95 }}
+                animate={{ rotateY: -15, scale: 1 }}
+                transition={{ 
+                  duration: 2.5, 
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                  delay: 0.3
+                }}
               >
                 {/* Left Page (Cover) */}
                 <div className="absolute left-0 top-0 w-36 h-48 bg-gradient-to-br from-amber-800 to-amber-900 rounded-l-lg shadow-2xl border-4 border-amber-600">
@@ -327,9 +335,13 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
                 {/* Right Page (Reveals Title) */}
                 <motion.div 
                   className="absolute right-0 top-0 w-36 h-48 book-page rounded-r-lg shadow-2xl border-4 border-amber-600"
-                  initial={{ rotateY: 0 }}
-                  animate={{ rotateY: 15 }}
-                  transition={{ duration: 2, ease: "easeOut" }}
+                  initial={{ rotateY: 0, scale: 0.95 }}
+                  animate={{ rotateY: 15, scale: 1 }}
+                  transition={{ 
+                    duration: 2.5, 
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                    delay: 0.6
+                  }}
                 >
                   <div className="p-3 h-full flex flex-col justify-center items-center">
                     {/* Artistic Open Book Icon */}
@@ -369,26 +381,26 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
         <motion.div
           className="relative"
           animate={{
-            rotate: [0, 1, -1, 0],
-            scale: [1, 1.01, 1]
+            rotate: [0, 0.5, -0.5, 0],
+            scale: [1, 1.005, 1]
           }}
           transition={{
-            duration: 6,
+            duration: 8,
             repeat: Infinity,
-            ease: 'easeInOut'
+            ease: [0.25, 0.46, 0.45, 0.94]
           }}
         >
           {/* Title Glow Effect */}
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-purple-500/40 to-blue-500/40 blur-3xl"
             animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.6, 1, 0.6]
+              scale: [1, 1.2, 1],
+              opacity: [0.7, 1, 0.7]
             }}
             transition={{
-              duration: 4,
+              duration: 5,
               repeat: Infinity,
-              ease: 'easeInOut'
+              ease: [0.25, 0.46, 0.45, 0.94]
             }}
           />
           
@@ -419,9 +431,13 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
         {wizardMessage && phase === 'wizard' && (
           <motion.div
             key={wizardMessage}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -30 }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ 
+              duration: 0.8, 
+              ease: [0.25, 0.46, 0.45, 0.94] 
+            }}
             className="bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-2xl p-6 border-2 border-purple-500/40 max-w-2xl mx-auto mb-6 relative z-10"
           >
             <div className="text-center">
@@ -436,14 +452,21 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onComplete }) => {
 
       {/* Start Button */}
       <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
+        initial={{ opacity: 0, scale: 0.8, y: 20 }}
         animate={{ 
           opacity: phase === 'wizard' ? 1 : 0,
-          scale: phase === 'wizard' ? 1 : 0.8
+          scale: phase === 'wizard' ? 1 : 0.8,
+          y: phase === 'wizard' ? 0 : 20
+        }}
+        transition={{ 
+          duration: 1, 
+          ease: [0.25, 0.46, 0.45, 0.94],
+          delay: phase === 'wizard' ? 0.5 : 0
         }}
         whileHover={{ 
           scale: 1.05,
-          boxShadow: "0 0 40px rgba(168, 85, 247, 0.8)"
+          boxShadow: "0 0 40px rgba(168, 85, 247, 0.8)",
+          y: -2
         }}
         whileTap={{ scale: 0.95 }}
         onClick={onComplete}
