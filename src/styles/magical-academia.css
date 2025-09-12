@@ -1,0 +1,151 @@
+/* Magical Academia Font Styles */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=UnifrakturMaguntia&display=swap');
+
+/* Magical Text Effects */
+.magical-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  text-shadow: 
+    0 0 10px rgba(168, 85, 247, 0.8),
+    0 0 20px rgba(168, 85, 247, 0.6),
+    0 0 30px rgba(168, 85, 247, 0.4),
+    0 0 40px rgba(168, 85, 247, 0.2);
+  animation: magical-glow 3s ease-in-out infinite alternate;
+}
+
+.magical-subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-style: italic;
+  text-shadow: 
+    0 0 8px rgba(59, 130, 246, 0.6),
+    0 0 16px rgba(59, 130, 246, 0.4);
+}
+
+.magical-runes {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-weight: 400;
+  text-shadow: 
+    0 0 5px rgba(168, 85, 247, 0.5),
+    0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+/* Glowing Text Animation */
+@keyframes magical-glow {
+  0% {
+    text-shadow: 
+      0 0 10px rgba(168, 85, 247, 0.8),
+      0 0 20px rgba(168, 85, 247, 0.6),
+      0 0 30px rgba(168, 85, 247, 0.4),
+      0 0 40px rgba(168, 85, 247, 0.2);
+  }
+  100% {
+    text-shadow: 
+      0 0 15px rgba(168, 85, 247, 1),
+      0 0 25px rgba(168, 85, 247, 0.8),
+      0 0 35px rgba(168, 85, 247, 0.6),
+      0 0 45px rgba(168, 85, 247, 0.4);
+  }
+}
+
+/* Book Page Effect */
+.book-page {
+  background: linear-gradient(45deg, 
+    #fef3c7 0%, 
+    #fde68a 25%, 
+    #fef3c7 50%, 
+    #fde68a 75%, 
+    #fef3c7 100%);
+  background-size: 20px 20px;
+  animation: paper-texture 10s linear infinite;
+}
+
+@keyframes paper-texture {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 20px; }
+}
+
+/* Lightning Effect */
+.lightning-bolt {
+  background: linear-gradient(180deg, 
+    #fbbf24 0%, 
+    #f59e0b 50%, 
+    #d97706 100%);
+  box-shadow: 
+    0 0 10px #fbbf24,
+    0 0 20px #f59e0b,
+    0 0 30px #d97706;
+}
+
+/* Magical Button */
+.magical-button {
+  background: linear-gradient(135deg, 
+    #7c3aed 0%, 
+    #5b21b6 25%, 
+    #3730a3 50%, 
+    #1e40af 75%, 
+    #1e3a8a 100%);
+  box-shadow: 
+    0 0 20px rgba(124, 58, 237, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(168, 85, 247, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.magical-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent);
+  transition: left 0.5s;
+}
+
+.magical-button:hover::before {
+  left: 100%;
+}
+
+/* Storm Cloud Animation */
+.storm-cloud {
+  background: radial-gradient(ellipse at center, 
+    rgba(30, 41, 59, 0.4) 0%, 
+    rgba(15, 23, 42, 0.6) 50%, 
+    rgba(2, 6, 23, 0.8) 100%);
+  filter: blur(2px);
+}
+
+/* Star Twinkle */
+.star-twinkle {
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Comet Trail */
+.comet-trail {
+  background: linear-gradient(45deg, 
+    #10b981 0%, 
+    #06b6d4 50%, 
+    #3b82f6 100%);
+  box-shadow: 
+    0 0 10px #10b981,
+    0 0 20px #06b6d4;
+}
+
+/* Ancient Rune Glow */
+.rune-glow {
+  text-shadow: 
+    0 0 5px rgba(168, 85, 247, 0.3),
+    0 0 10px rgba(168, 85, 247, 0.2),
+    0 0 15px rgba(168, 85, 247, 0.1);
+  filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.4));
+}

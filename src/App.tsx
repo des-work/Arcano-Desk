@@ -5,9 +5,12 @@ import { OptimizedOllamaProvider } from './contexts/OptimizedOllamaContext.tsx';
 import { RobustOllamaProvider, useRobustOllama } from './contexts/RobustOllamaContext.tsx';
 import AIDocumentAnalyzer from './components/AIDocumentAnalyzer.tsx';
 import MarkedDocumentViewer from './components/MarkedDocumentViewer.tsx';
+import LibraryPhase from './components/LibraryPhase.tsx';
+import LaunchScreen from './components/LaunchScreen.tsx';
 // import { PerformanceMonitor } from './components/PerformanceMonitor.tsx';
 import { StudyGuideEnhancementOptions } from './utils/DocumentProcessor';
 // import { SimpleDocumentUpload } from './components/SimpleDocumentUpload';
+import './styles/magical-academia.css';
 
 // Inline SimpleDocumentUpload component
 interface SimpleDocumentUploadProps {
@@ -90,6 +93,7 @@ function AppContent() {
   const { isConnected, isLoading: aiLoading, generateSummary, generateStudyMaterial, askQuestion } = useRobustOllama();
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
   const [currentPhase, setCurrentPhase] = useState<'welcome' | 'upload' | 'library' | 'sample' | 'customize' | 'export' | 'generating'>('welcome');
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [aiStatus, setAiStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
   const [generatedStudyGuide, setGeneratedStudyGuide] = useState<any[]>([]);
@@ -711,12 +715,24 @@ function AppContent() {
     return [...new Set(summaries)].slice(0, 6);
   };
 
-  const handleGenerateStudyGuide = async () => {
+  const handleDeleteDocument = (documentId: string) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    setSelectedDocuments(prev => prev.filter(id => id !== documentId));
+  };
+
+  const handleLibraryComplete = (selectedFileIds: string[]) => {
+    setSelectedDocuments(selectedFileIds);
+    const selectedDocs = documents.filter(doc => selectedFileIds.includes(doc.id));
+    handleGenerateStudyGuide(selectedDocs);
+  };
+
+  const handleGenerateStudyGuide = async (docsToProcess?: ProcessedDocument[]) => {
+    const docs = docsToProcess || documents;
     setCurrentPhase('generating');
     
     try {
       // Process uploaded documents to generate study guide
-      await generateStudyGuideFromDocuments(documents);
+      await generateStudyGuideFromDocuments(docs);
       setCurrentPhase('sample');
     } catch (error) {
       console.error('Error generating study guide:', error);
@@ -797,35 +813,7 @@ function AppContent() {
   }
 
   if (showLaunchScreen) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-8xl mb-8">🧙‍♂️</div>
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-cyan-300 mb-6">
-            Arcano Desk
-          </h1>
-          <p className="text-purple-200 text-xl mb-8 leading-relaxed">
-            Your AI-powered study companion for enhanced learning and document processing
-          </p>
-          
-          <div className="space-y-4">
-          <button
-              onClick={handleStartJourney}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/30"
-          >
-              🚀 Start Your Study Journey
-            </button>
-            
-            <button
-              onClick={() => setShowDemo(true)}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-500 hover:to-emerald-500 transition-all duration-300 shadow-lg hover:shadow-green-500/30"
-            >
-              🚀 Try Enhanced Document Processing Demo
-          </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <LaunchScreen onComplete={handleStartJourney} />;
   }
 
   return (
@@ -999,81 +987,20 @@ function AppContent() {
         {/* Library Phase */}
         {currentPhase === 'library' && (
           <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-purple-200 mb-6">Document Library</h2>
-              
-              {documents.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="bg-gradient-to-br from-purple-800/30 to-pink-800/30 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
-                      <div className="text-4xl mb-4">📄</div>
-                      <h3 className="text-xl font-semibold text-purple-200 mb-2">{doc.name}</h3>
-                      <p className="text-purple-300/70 text-sm mb-2">{doc.type}</p>
-                      <p className="text-purple-300/60 text-xs mb-4">
-                        {doc.wordCount} words • {Math.round(doc.metadata.size / 1024)}KB
-                      </p>
-                      
-                      {/* Content Preview */}
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-purple-300 mb-2">Content Preview:</h4>
-                        <p className="text-purple-300/80 text-xs leading-relaxed">
-                          {doc.content.substring(0, 150)}...
-                        </p>
-                      </div>
-                      
-                      {doc.keyConcepts && doc.keyConcepts.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="text-sm font-semibold text-purple-300 mb-2">Key Concepts:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {doc.keyConcepts.slice(0, 3).map((concept, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-purple-600/30 text-purple-200 text-xs rounded">
-                                {concept}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {doc.vocabulary && doc.vocabulary.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="text-sm font-semibold text-purple-300 mb-2">Vocabulary:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {doc.vocabulary.slice(0, 3).map((term, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-blue-600/30 text-blue-200 text-xs rounded">
-                                {term}
-                              </span>
-                            ))}
-                          </div>
-                      </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📚</div>
-                  <h3 className="text-xl font-semibold text-purple-200 mb-2">No Documents Yet</h3>
-                  <p className="text-purple-300/70">Upload some documents to get started!</p>
-                </div>
-              )}
-            </div>
+            <LibraryPhase
+              onComplete={handleLibraryComplete}
+              documents={documents}
+              onDeleteDocument={handleDeleteDocument}
+            />
             
             {/* Navigation */}
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 mt-8">
               <button
                 onClick={() => handlePhaseChange('upload')}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all duration-300"
               >
                 📁 Upload More Documents
               </button>
-              {documents.length > 0 && (
-                <button
-                  onClick={handleGenerateStudyGuide}
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-500 hover:to-emerald-500 transition-all duration-300 shadow-lg hover:shadow-green-500/30"
-                >
-                  ✨ Generate Sample Study Guide
-                </button>
-              )}
             </div>
           </div>
         )}

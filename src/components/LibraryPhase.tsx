@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAnimations } from '../animations';
-import { InteractiveButton, InteractiveCard } from '../animations';
-import { useFiles } from '../hooks/useFiles';
-import { useWizard } from '../hooks/useWizard';
+// import { useAnimations } from '../animations';
+// import { InteractiveButton, InteractiveCard } from '../animations';
+// import { useFiles } from '../hooks/useFiles';
+// import { useWizard } from '../hooks/useWizard';
 import { 
   BookOpen, 
   FileText, 
@@ -19,13 +19,13 @@ import {
 } from 'lucide-react';
 
 interface LibraryPhaseProps {
-  onComplete: () => void;
+  onComplete: (selectedFiles: string[]) => void;
+  documents: any[];
+  onDeleteDocument: (documentId: string) => void;
 }
 
-export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
-  const { triggerAnimation } = useAnimations();
-  const { files, courses, getFilesByCourse } = useFiles();
-  const { castSpell, gainKnowledge, changeMood } = useWizard();
+export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete, documents, onDeleteDocument }) => {
+  // const { triggerAnimation } = useAnimations();
   
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,17 +33,15 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
 
-  // Update wizard state
+  // Initialize component
   useEffect(() => {
-    changeMood('excited');
-    castSpell('library-reveal');
-  }, [changeMood, castSpell]);
+    // triggerAnimation('library-reveal', { intensity: 'gentle' });
+  }, []);
 
-  // Filter files based on search and course
-  const filteredFiles = files.filter(file => {
-    const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = selectedCourse === 'all' || file.courseId === selectedCourse;
-    return matchesSearch && matchesCourse;
+  // Filter documents based on search
+  const filteredFiles = documents.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   const handleFileSelect = (fileId: string) => {
@@ -53,42 +51,36 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
         : [...prev, fileId]
     );
     
-    triggerAnimation('button-click', { intensity: 'gentle' });
+    // triggerAnimation('button-click', { intensity: 'gentle' });
   };
 
   const handleCreateSummary = () => {
     if (selectedFiles.length === 0) {
-      toast.error('Please select at least one file');
+      alert('Please select at least one file');
       return;
     }
     
-    changeMood('focused');
-    castSpell('summary-creation');
-    triggerAnimation('wizard-cast', { intensity: 'intense' });
+    // triggerAnimation('wizard-cast', { intensity: 'intense' });
     
-    // Wizard gains knowledge from selected files
-    selectedFiles.forEach(fileId => {
-      const file = files.find(f => f.id === fileId);
-      if (file) {
-        gainKnowledge(file.name);
-      }
-    });
-    
-    onComplete();
+    onComplete(selectedFiles);
   };
 
   const handleFileAction = (fileId: string, action: 'view' | 'edit' | 'delete') => {
-    triggerAnimation('button-click', { intensity: 'moderate' });
+    // triggerAnimation('button-click', { intensity: 'moderate' });
     
     switch (action) {
       case 'view':
-        castSpell('file-reveal');
+        // triggerAnimation('file-reveal', { intensity: 'gentle' });
         break;
       case 'edit':
-        castSpell('file-edit');
+        // triggerAnimation('file-edit', { intensity: 'gentle' });
         break;
       case 'delete':
-        castSpell('file-destroy');
+        if (window.confirm('Are you sure you want to delete this document?')) {
+          // triggerAnimation('file-destroy', { intensity: 'moderate' });
+          onDeleteDocument(fileId);
+          setSelectedFiles(prev => prev.filter(id => id !== fileId));
+        }
         break;
     }
   };
@@ -107,22 +99,20 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
           </h1>
           
           <div className="flex items-center space-x-4">
-            <InteractiveButton
-              variant="secondary"
-              size="sm"
+            <button
               onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              className="px-3 py-2 bg-slate-700/50 text-slate-200 rounded-lg hover:bg-slate-600/50 transition-colors"
             >
               {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-            </InteractiveButton>
+            </button>
             
-            <InteractiveButton
-              variant="magic"
-              size="sm"
+            <button
               onClick={() => setShowCreateCourse(true)}
+              className="px-3 py-2 bg-purple-600/50 text-purple-200 rounded-lg hover:bg-purple-500/50 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Course
-            </InteractiveButton>
+            </button>
           </div>
         </div>
 
@@ -139,18 +129,9 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
             />
           </div>
           
-          <select
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-4 py-3 bg-slate-800/50 backdrop-blur-lg border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-purple-400 font-arcane"
-          >
-            <option value="all">All Courses</option>
-            {courses.map(course => (
-              <option key={course.id} value={course.id}>
-                {course.name}
-              </option>
-            ))}
-          </select>
+          <div className="text-purple-200 font-arcane">
+            {documents.length} document(s) in library
+          </div>
         </div>
       </motion.div>
 
@@ -179,9 +160,8 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <InteractiveCard
-                  hoverEffect="magic"
-                  className={`p-6 ${selectedFiles.includes(file.id) ? 'ring-2 ring-purple-400' : ''}`}
+                <div
+                  className={`p-6 bg-gradient-to-br from-purple-800/30 to-pink-800/30 backdrop-blur-sm rounded-xl border border-purple-500/20 cursor-pointer hover:from-purple-700/40 hover:to-pink-700/40 transition-all duration-300 ${selectedFiles.includes(file.id) ? 'ring-2 ring-purple-400' : ''}`}
                   onClick={() => handleFileSelect(file.id)}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -192,7 +172,7 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
                           {file.name}
                         </h3>
                         <p className="text-purple-200/60 font-arcane text-sm">
-                          {courses.find(c => c.id === file.courseId)?.name || 'Unknown Course'}
+                          {file.type || 'Document'}
                         </p>
                       </div>
                     </div>
@@ -229,8 +209,8 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
                   </div>
                   
                   <div className="flex items-center justify-between text-sm text-purple-200/60">
-                    <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-                    <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
+                    <span>{file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}</span>
+                    <span>{file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : 'Unknown date'}</span>
                   </div>
                   
                   {selectedFiles.includes(file.id) && (
@@ -242,7 +222,7 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
                       <Star className="w-5 h-5 text-yellow-400 fill-current" />
                     </motion.div>
                   )}
-                </InteractiveCard>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -258,7 +238,7 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
             exit={{ opacity: 0, y: 20 }}
             className="mt-8"
           >
-            <InteractiveCard className="p-6">
+            <div className="p-6 bg-gradient-to-br from-purple-800/30 to-pink-800/30 backdrop-blur-sm rounded-xl border border-purple-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <span className="text-purple-200 font-arcane">
@@ -273,26 +253,26 @@ export const LibraryPhase: React.FC<LibraryPhaseProps> = ({ onComplete }) => {
                 </div>
                 
                 <div className="flex space-x-4">
-                  <InteractiveButton
-                    variant="secondary"
+                  <button
                     onClick={() => {
-                      triggerAnimation('button-click', { intensity: 'gentle' });
+                      // triggerAnimation('button-click', { intensity: 'gentle' });
                       setSelectedFiles([]);
                     }}
+                    className="px-4 py-2 bg-slate-700/50 text-slate-200 rounded-lg hover:bg-slate-600/50 transition-colors"
                   >
                     Cancel
-                  </InteractiveButton>
+                  </button>
                   
-                  <InteractiveButton
-                    variant="magic"
+                  <button
                     onClick={handleCreateSummary}
+                    className="px-4 py-2 bg-purple-600/50 text-purple-200 rounded-lg hover:bg-purple-500/50 transition-colors"
                   >
                     <BookOpen className="w-4 h-4 mr-2" />
                     Create Summary
-                  </InteractiveButton>
+                  </button>
                 </div>
               </div>
-            </InteractiveCard>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
